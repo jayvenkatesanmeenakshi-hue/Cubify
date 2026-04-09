@@ -6,7 +6,7 @@ import { TimerPage } from './pages/TimerPage';
 import { SolverPage } from './pages/SolverPage';
 import { AICoachPage } from './pages/AICoachPage';
 import { generateScramble } from './lib/cube';
-import { auth, db, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, getDocFromServer, setDoc } from './firebase';
+import { auth, db, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, getDoc, setDoc } from './firebase';
 import { User } from 'firebase/auth';
 import { SolveRecord, PuzzleType } from './types';
 import { handleFirestoreError, OperationType } from './lib/firestoreError';
@@ -101,7 +101,7 @@ export default function App() {
       if (currentUser) {
         // Initialize user profile with friendId if it doesn't exist
         const userRef = doc(db, 'users', currentUser.uid);
-        getDocFromServer(userRef).then((docSnap) => {
+        getDoc(userRef).then((docSnap) => {
           if (!docSnap.exists()) {
             const friendId = Math.floor(10000000 + Math.random() * 90000000).toString();
             setDoc(userRef, {
@@ -109,10 +109,10 @@ export default function App() {
               displayName: currentUser.displayName || 'Cuber',
               photoURL: currentUser.photoURL || '',
               friendId: friendId
-            });
+            }).catch(e => console.error("Error creating user profile:", e));
           } else if (!docSnap.data().friendId) {
             const friendId = Math.floor(10000000 + Math.random() * 90000000).toString();
-            setDoc(userRef, { friendId }, { merge: true });
+            setDoc(userRef, { friendId }, { merge: true }).catch(e => console.error("Error updating user profile:", e));
           }
         }).catch(e => console.error("Error fetching user profile", e));
       }

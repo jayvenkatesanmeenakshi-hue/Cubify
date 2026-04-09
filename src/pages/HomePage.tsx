@@ -22,16 +22,28 @@ export const HomePage: React.FC<HomePageProps> = ({ user, solves }) => {
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
       if (docSnap.exists()) {
-        setProfile(docSnap.data());
-        setEditName(docSnap.data().displayName || user.displayName || 'Cuber');
+        const data = docSnap.data();
+        setProfile(data);
+        setEditName(data.displayName || user.displayName || 'Cuber');
+        
+        // Self-heal: generate friendId if it's missing
+        if (!data.friendId) {
+          const newFriendId = Math.floor(10000000 + Math.random() * 90000000).toString();
+          setDoc(doc(db, 'users', user.uid), { friendId: newFriendId }, { merge: true }).catch(console.error);
+        }
       } else {
         // Fallback while the document is being created by App.tsx
-        setProfile({
+        // Also self-heal by creating the document here just in case App.tsx failed
+        const newFriendId = Math.floor(10000000 + Math.random() * 90000000).toString();
+        const newProfile = {
           displayName: user.displayName || 'Cuber',
           photoURL: user.photoURL || '',
-          points: 0
-        });
-        setEditName(user.displayName || 'Cuber');
+          points: 0,
+          friendId: newFriendId
+        };
+        setProfile(newProfile);
+        setEditName(newProfile.displayName);
+        setDoc(doc(db, 'users', user.uid), newProfile, { merge: true }).catch(console.error);
       }
     });
     return () => unsubscribe();
