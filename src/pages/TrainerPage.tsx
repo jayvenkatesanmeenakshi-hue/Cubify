@@ -13,9 +13,16 @@ const PLL_ALGS = [
   { id: 'Ua', name: 'Ua Perm', alg: "M2 U M U2 M' U M2", img: 'https://cubing.net/api/visualcube/?fmt=svg&size=150&view=plan&bg=t&stage=pll&case=M2 U M U2 M U M2' },
 ];
 
+interface Alg {
+  id: number | string;
+  name: string;
+  alg: string;
+  img: string;
+}
+
 export const TrainerPage = () => {
   const [activeSet, setActiveSet] = useState<'OLL' | 'PLL'>('OLL');
-  const [currentAlg, setCurrentAlg] = useState(OLL_ALGS[0]);
+  const [currentAlg, setCurrentAlg] = useState<Alg>(OLL_ALGS[0]);
   const [showAlg, setShowAlg] = useState(false);
 
   const nextAlg = () => {
