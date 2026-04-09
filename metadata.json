@@ -1,0 +1,5 @@
+{
+  "name": "Cubify AI",
+  "description": "A modern web app for Rubik's Cube enthusiasts featuring a professional timer, WCA scrambler, AI solver, and Firebase authentication.",
+  "requestFramePermissions": []
+}

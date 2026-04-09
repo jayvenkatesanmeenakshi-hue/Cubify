@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidSolve(data) {
+      return hasRequiredFields(['uid', 'time', 'scramble', 'date']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.time is number && data.time > 0 &&
+             data.scramble is string && data.scramble.size() > 0 && data.scramble.size() < 200 &&
+             data.date is timestamp &&
+             (!('penalty' in data) || (data.penalty is string && data.penalty in ['', '+2', 'DNF'])) &&
+             (!('puzzle' in data) || data.puzzle is string);
+    }
+
+    match /solves/{solveId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated() && isValidSolve(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid && isValidSolve(request.resource.data) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    match /friend_requests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.from;
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+    }
+
+    match /chats/{chatId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid in request.resource.data.participants;
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.auth.uid == request.resource.data.senderId;
+      }
+    }
+
+    match /race_lobby/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      // Allow user to update their own, OR allow another user to match with them
+      allow update: if isAuthenticated() && (
+        request.auth.uid == userId || 
+        (resource.data.state == 'searching' && request.resource.data.state == 'matched')
+      );
+      allow delete: if isOwner(userId);
+    }
+
+    match /matches/{matchId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Allow update if the user is part of the match
+      allow update: if isAuthenticated() && (
+        request.auth.uid in resource.data.players.keys() ||
+        request.auth.uid in request.resource.data.players.keys()
+      );
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Solve": {
+      "title": "Solve",
+      "description": "A single Rubik's Cube solve record.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user ID of the solver."
+        },
+        "time": {
+          "type": "number",
+          "description": "The solve time in seconds."
+        },
+        "scramble": {
+          "type": "string",
+          "description": "The scramble used for this solve."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time of the solve."
+        },
+        "penalty": {
+          "type": "string",
+          "enum": ["", "+2", "DNF"],
+          "description": "Any penalty applied to the solve."
+        },
+        "puzzle": {
+          "type": "string",
+          "description": "The puzzle type (e.g., 3x3, 2x2)."
+        }
+      },
+      "required": ["uid", "time", "scramble", "date"]
+    }
+  },
+  "firestore": {
+    "/solves/{solveId}": {
+      "schema": {
+        "$ref": "#/entities/Solve"
+      },
+      "description": "Collection of all solves."
+    }
+  }
+}
