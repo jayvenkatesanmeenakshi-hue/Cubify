@@ -106,8 +106,8 @@ export default function App() {
             const friendId = Math.floor(10000000 + Math.random() * 90000000).toString();
             setDoc(userRef, {
               points: 0,
-              displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
+              displayName: currentUser.displayName || 'Cuber',
+              photoURL: currentUser.photoURL || '',
               friendId: friendId
             });
           } else if (!docSnap.data().friendId) {

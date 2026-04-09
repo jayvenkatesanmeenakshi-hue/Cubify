@@ -23,7 +23,15 @@ export const HomePage: React.FC<HomePageProps> = ({ user, solves }) => {
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         setProfile(docSnap.data());
-        setEditName(docSnap.data().displayName || user.displayName || '');
+        setEditName(docSnap.data().displayName || user.displayName || 'Cuber');
+      } else {
+        // Fallback while the document is being created by App.tsx
+        setProfile({
+          displayName: user.displayName || 'Cuber',
+          photoURL: user.photoURL || '',
+          points: 0
+        });
+        setEditName(user.displayName || 'Cuber');
       }
     });
     return () => unsubscribe();
