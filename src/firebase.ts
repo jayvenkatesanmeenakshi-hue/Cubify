@@ -5,7 +5,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
 
 async function testConnection() {
   try {
@@ -22,8 +22,9 @@ export const loginWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   try {
     await signInWithPopup(auth, provider);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error logging in with Google", error);
+    alert(`Login failed: ${error.message}`);
   }
 };
 
