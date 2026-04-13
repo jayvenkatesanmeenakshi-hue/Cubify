@@ -7,6 +7,7 @@ import { SolverPage } from './pages/SolverPage';
 import { AICoachPage } from './pages/AICoachPage';
 import { generateScramble } from './lib/cube';
 import { auth, db, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, getDoc, setDoc } from './firebase';
+import { syncEcosystemUser } from './services/ecosystemService';
 import { User } from 'firebase/auth';
 import { SolveRecord, PuzzleType } from './types';
 import { handleFirestoreError, OperationType } from './lib/firestoreError';
@@ -99,6 +100,9 @@ export default function App() {
       setUser(currentUser);
       
       if (currentUser) {
+        // Sync with StarVortex Ecosystem
+        syncEcosystemUser(currentUser, 'Cubify');
+
         // Initialize user profile with friendId if it doesn't exist
         const userRef = doc(db, 'users', currentUser.uid);
         getDoc(userRef).then((docSnap) => {
