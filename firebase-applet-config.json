@@ -1,9 +1,10 @@
 {
-  "apiKey": "AIzaSyAjU4fPpaN5ye8OcGajg7Y24GLyYbPZbLg",
-  "authDomain": "cubify-e57b6.firebaseapp.com",
-  "projectId": "cubify-e57b6",
-  "storageBucket": "cubify-e57b6.firebasestorage.app",
-  "messagingSenderId": "147168855544",
-  "appId": "1:147168855544:web:414eb150ab5792043c420d",
-  "measurementId": "G-1KP22DWYHC"
+  "projectId": "gen-lang-client-0877863843",
+  "appId": "1:156288592738:web:cd4c568ab34b355b5c5a3b",
+  "apiKey": "AIzaSyAvCkZOub2SSRMRMXeg4cx6D0tbWMfqBMA",
+  "authDomain": "gen-lang-client-0877863843.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-76f856f9-afb9-4067-8fe8-9927d55e5397",
+  "storageBucket": "gen-lang-client-0877863843.firebasestorage.app",
+  "messagingSenderId": "156288592738",
+  "measurementId": ""
 }
