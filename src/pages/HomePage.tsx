@@ -5,10 +5,9 @@ import { db } from '../firebase';
 import { SolveRecord } from '../types';
 import { getRankFromPoints, getNextRank } from '../lib/ranks';
 import { RankBadge } from '../components/RankBadge';
-import { Edit2, Save, X, Activity, Clock, Trophy, TrendingUp, Download } from 'lucide-react';
+import { Edit2, Save, X, Activity, Clock, Trophy, TrendingUp } from 'lucide-react';
 import { formatTime } from '../lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { downloadSvgAsPng, FAVICON_SVG } from '../lib/assets';
 
 interface HomePageProps {
   user: User;
@@ -212,26 +211,6 @@ export const HomePage: React.FC<HomePageProps> = ({ user, solves }) => {
             Complete some solves to see your performance history.
           </div>
         )}
-      </div>
-
-      {/* Brand Assets Section */}
-      <div className="bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-800 text-white">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-2xl font-black mb-2 flex items-center gap-3">
-              <Download className="w-6 h-6 text-yellow-500" />
-              Brand Assets
-            </h3>
-            <p className="text-slate-400">Download the official Cubify favicon as a high-resolution PNG.</p>
-          </div>
-          <button 
-            onClick={() => downloadSvgAsPng(FAVICON_SVG, 'cubify-favicon', 512)}
-            className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-8 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/20"
-          >
-            <Download className="w-5 h-5" />
-            Download PNG (512x512)
-          </button>
-        </div>
       </div>
     </div>
   );
