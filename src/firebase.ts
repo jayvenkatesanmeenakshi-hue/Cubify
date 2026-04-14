@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { initializeFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, serverTimestamp, deleteDoc, doc, getDocFromServer, getDoc, setDoc, getDocs, runTransaction, writeBatch } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
+import { toast } from 'sonner';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -19,7 +20,7 @@ export const loginWithGoogle = async () => {
       return;
     }
     console.error("Error logging in with Google", error);
-    alert(`Login failed: ${error.message}`);
+    toast.error(`Login failed: ${error.message}`);
   }
 };
 

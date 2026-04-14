@@ -4,6 +4,7 @@ import { db, collection, doc, setDoc, getDocs, query, where, orderBy, onSnapshot
 import { MessageCircle, Users, UserPlus, Search, Send, Check, X, AlertCircle, Zap } from 'lucide-react';
 import { generateScramble } from '../lib/cube';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface SocialPageProps {
   user: User | null;
@@ -84,10 +85,10 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
         status: 'pending',
         timestamp: serverTimestamp()
       });
-      alert('Friend request sent!');
+      toast.success('Friend request sent!');
     } catch (e) {
       console.error(e);
-      alert('Error sending request.');
+      toast.error('Error sending request.');
     }
   };
 
@@ -115,7 +116,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       setActiveTab('messages');
     } catch (e) {
       console.error(e);
-      alert('Error accepting request.');
+      toast.error('Error accepting request.');
     }
   };
 

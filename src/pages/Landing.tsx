@@ -11,7 +11,7 @@ export const Landing = () => {
       <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-black tracking-tight text-slate-900">
-            Cubify<span className="text-yellow-500">AI</span>
+            Cubify
           </span>
         </div>
         <div>
@@ -40,11 +40,11 @@ export const Landing = () => {
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 mb-8 leading-[0.9]">
               Master the Cube.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-orange-500">
-                Powered by AI.
+                Precision Timing.
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 mb-10 max-w-2xl mx-auto font-medium">
-              Professional timing, WCA scrambles, algorithm training, and an AI-powered coach that analyzes your solves to make you faster.
+              Professional timing, WCA scrambles, algorithm training, and AI-powered insights to help you break your personal bests.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -110,13 +110,13 @@ export const Landing = () => {
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Ready to drop your times?</h2>
             <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-              Join the community of cubers using CubifyAI to practice smarter, not just harder.
+              Join the community of cubers using Cubify to practice smarter, not just harder.
             </p>
             <button 
               onClick={loginWithGoogle}
               className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-bold py-4 px-10 rounded-full transition-all hover:scale-105 shadow-xl shadow-yellow-400/20 text-lg"
             >
-              Join CubifyAI Now
+              Join Cubify Now
             </button>
           </div>
         </div>

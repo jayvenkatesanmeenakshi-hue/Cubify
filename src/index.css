@@ -1,5 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-yellow: #f59e0b;
+  --color-brand-dark: #0f172a;
+}
 
 /* Hide scrollbar globally but keep functionality */
 ::-webkit-scrollbar {
@@ -13,4 +22,10 @@
 
 html, body {
   overscroll-behavior-y: none; /* Prevent bounce effect on mac/mobile */
+  font-family: var(--font-sans);
+}
+
+.font-technical {
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
 }

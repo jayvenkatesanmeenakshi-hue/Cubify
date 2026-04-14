@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ user }) => {
       {/* Mobile Header */}
       {user && (
         <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center justify-between px-4">
-          <span className="text-xl font-black text-slate-800">Cubify<span className="text-yellow-500">AI</span></span>
+          <span className="text-xl font-black text-slate-800">Cubify</span>
           <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 p-2">
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -40,7 +40,7 @@ export const Layout: React.FC<LayoutProps> = ({ user }) => {
       {user && (
         <div className={`fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col shadow-2xl md:shadow-none`}>
           <div className="h-16 flex items-center px-6 border-b border-slate-200 hidden md:flex">
-            <span className="text-2xl font-black text-slate-800">Cubify<span className="text-yellow-500">AI</span></span>
+            <span className="text-2xl font-black text-slate-800">Cubify</span>
           </div>
           <nav className="flex-1 px-4 py-6 space-y-2 mt-16 md:mt-0 overflow-y-auto">
             {navItems.map((item) => {

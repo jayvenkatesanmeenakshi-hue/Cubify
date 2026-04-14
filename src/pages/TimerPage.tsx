@@ -5,6 +5,7 @@ import { Scrambler } from '../components/Scrambler';
 import { Stats } from '../components/Stats';
 import { SolveRecord, PuzzleType } from '../types';
 import { RefreshCw, Bluetooth, BluetoothConnected, Flame } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface TimerPageProps {
   scramble: string;
@@ -24,7 +25,7 @@ export const TimerPage: React.FC<TimerPageProps> = ({ scramble, solves, onSolveC
   const handleBluetoothConnect = async () => {
     try {
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported in this browser.");
+        toast.error("Web Bluetooth is not supported in this browser.");
         return;
       }
       // Request any bluetooth device for now as a mock
@@ -33,7 +34,7 @@ export const TimerPage: React.FC<TimerPageProps> = ({ scramble, solves, onSolveC
       });
       if (device) {
         setIsBluetoothConnected(true);
-        alert(`Connected to ${device.name || 'Smart Cube'}`);
+        toast.success(`Connected to ${device.name || 'Smart Cube'}`);
       }
     } catch (e) {
       console.error(e);

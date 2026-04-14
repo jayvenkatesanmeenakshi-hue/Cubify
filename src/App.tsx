@@ -12,6 +12,7 @@ import { User } from 'firebase/auth';
 import { SolveRecord, PuzzleType } from './types';
 import { handleFirestoreError, OperationType } from './lib/firestoreError';
 import { motion, AnimatePresence } from 'motion/react';
+import { Toaster } from 'sonner';
 
 import { SocialPage } from './pages/SocialPage';
 import { HomePage } from './pages/HomePage';
@@ -26,6 +27,7 @@ const AppRoutes = ({ user, puzzle, setPuzzle, scramble, setScramble, solves, han
 
   return (
     <AnimatePresence mode="wait">
+      <Toaster position="top-center" richColors />
       <Routes location={location} key={location.pathname === '/tournament' ? 'tournament' : 'main'}>
         <Route path="/tournament" element={
           <motion.div 
