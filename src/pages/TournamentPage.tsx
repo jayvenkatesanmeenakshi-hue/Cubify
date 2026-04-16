@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { db, collection, getDocs, query, orderBy, limit, doc, onSnapshot } from '../firebase';
-import { Trophy, Ticket, Flame, ChevronUp, ChevronDown, Minus, Clock, AlertCircle, ArrowLeft, Crosshair, Shield } from 'lucide-react';
+import { db, collection, getDocs, query, orderBy, limit, doc, onSnapshot, where } from '../firebase';
+import { Trophy, Ticket, Flame, ChevronUp, ChevronDown, Minus, Clock, AlertCircle, ArrowLeft, Crosshair, Shield, Lock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RANKS, getRankFromPoints, getNextRank } from '../lib/ranks';
 
@@ -14,9 +14,16 @@ export const TournamentPage: React.FC<TournamentPageProps> = ({ user }) => {
   const [myPoints, setMyPoints] = useState(0);
   const [matchesPlayed, setMatchesPlayed] = useState(0);
   const [bracketPlayers, setBracketPlayers] = useState<any[]>([]);
+  const [solveCount, setSolveCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
+    
+    // Fetch solve count for unlocking
+    const qSolves = query(collection(db, 'solves'), where('uid', '==', user.uid));
+    const unsubscribeSolves = onSnapshot(qSolves, (snap) => {
+      setSolveCount(snap.size);
+    });
     
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
       if (docSnap.exists()) {
@@ -56,7 +63,10 @@ export const TournamentPage: React.FC<TournamentPageProps> = ({ user }) => {
     };
     
     fetchBracket();
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeSolves();
+    };
   }, [user]);
 
   if (!user) {
@@ -132,14 +142,30 @@ export const TournamentPage: React.FC<TournamentPageProps> = ({ user }) => {
               </div>
               <div className="text-slate-400 text-sm font-mono mb-8">Bracket #A-4092</div>
               
-              <button 
-                onClick={() => navigate('/tournament/match')}
-                disabled={matchesPlayed >= 20}
-                className={`w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all flex items-center justify-center gap-3 ${matchesPlayed >= 20 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-95'}`}
-              >
-                <Flame className="w-6 h-6" />
-                {matchesPlayed >= 20 ? 'Daily Limit Reached' : 'Enter Match'}
-              </button>
+              {solveCount !== null && solveCount < 10 ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center mb-4">
+                  <Lock className="w-8 h-8 text-slate-500 mx-auto mb-3" />
+                  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Arena Locked</div>
+                  <div className="text-xs text-slate-500 font-mono">
+                    Complete <span className="text-yellow-500">{10 - solveCount}</span> more solo solves to unlock the tournament.
+                  </div>
+                  <div className="mt-4 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-yellow-500 transition-all duration-500" 
+                      style={{ width: `${(solveCount / 10) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => navigate('/tournament/match')}
+                  disabled={matchesPlayed >= 20}
+                  className={`w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider transition-all flex items-center justify-center gap-3 ${matchesPlayed >= 20 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] active:scale-95'}`}
+                >
+                  <Flame className="w-6 h-6" />
+                  {matchesPlayed >= 20 ? 'Daily Limit Reached' : 'Enter Match'}
+                </button>
+              )}
               <div className="text-center mt-3 text-xs font-mono text-slate-500">
                 MATCHES TODAY: <span className={matchesPlayed >= 20 ? 'text-red-500' : 'text-white'}>{matchesPlayed} / 20</span>
               </div>

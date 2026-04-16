@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Flame, Trophy, AlertCircle, Crosshair, User as UserIcon } from 'lucide-react';
 import { formatTime } from '../lib/utils';
 import { generateScramble } from '../lib/cube';
-import { db, doc, getDocFromServer } from '../firebase';
+import { db, doc, getDocFromServer, collection, query, where, getDocs } from '../firebase';
 import { RANKS, getRankFromPoints } from '../lib/ranks';
 
 interface TournamentMatchProps {
@@ -54,28 +54,41 @@ export const TournamentMatch: React.FC<TournamentMatchProps> = ({ user, onSolveC
     setOpponentName(OPPONENT_NAMES[Math.floor(Math.random() * OPPONENT_NAMES.length)]);
     
     const setupOpponent = async () => {
-      let points = 0;
+      let baseTimeMs = 35000; // Default fallback
+      
       if (user) {
         try {
-          const userDoc = await getDocFromServer(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            points = userDoc.data().points || 0;
+          // Fetch user's solo solves to calculate average
+          const q = query(collection(db, 'solves'), where('uid', '==', user.uid));
+          const solveSnap = await getDocs(q);
+          
+          if (!solveSnap.empty) {
+            const soloSolves = solveSnap.docs
+              .map(d => d.data().time)
+              .filter(t => typeof t === 'number' && t > 0);
+            
+            if (soloSolves.length > 0) {
+              // Calculate average of all solo solves
+              const avg = soloSolves.reduce((a, b) => a + b, 0) / soloSolves.length;
+              baseTimeMs = avg;
+            }
+          } else {
+            // Fallback to rank-based if no solves yet (though tournament should be locked)
+            const userDoc = await getDocFromServer(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              const points = userDoc.data().points || 0;
+              const currentRank = getRankFromPoints(points);
+              const rankIndex = RANKS.findIndex(r => r.name === currentRank.name);
+              baseTimeMs = 35000 - (rankIndex * 1000);
+            }
           }
         } catch (e) {
-          console.error("Failed to fetch user points for opponent scaling", e);
+          console.error("Failed to fetch user data for opponent scaling", e);
         }
       }
-
-      const currentRank = getRankFromPoints(points);
-      const rankIndex = RANKS.findIndex(r => r.name === currentRank.name);
       
-      // Base time calculation based on rank index (0 to 28)
-      // WOOD I (0) ~ 35s
-      // GRANDMASTER (28) ~ 7s
-      const baseTimeMs = 35000 - (rankIndex * 1000);
-      
-      // Add randomness: +/- 15%
-      const variance = baseTimeMs * 0.15;
+      // Add randomness: +/- 10% for a "fair" challenge
+      const variance = baseTimeMs * 0.10;
       const finalTime = baseTimeMs + (Math.random() * variance * 2 - variance);
       
       setOpponentFinalTime(Math.floor(finalTime));
