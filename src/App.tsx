@@ -182,7 +182,7 @@ export default function App() {
             if (currentMatches < 20) {
               let pointsEarned = 0;
               if (wonTournamentMatch !== false) { // If true or undefined (legacy)
-                const timeInSeconds = time / 1000;
+                const timeInSeconds = time;
                 const speedBonus = Math.max(0, Math.floor(100 - timeInSeconds));
                 pointsEarned = 10 + speedBonus;
               } else {

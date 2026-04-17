@@ -68,9 +68,9 @@ export const TournamentMatch: React.FC<TournamentMatchProps> = ({ user, onSolveC
               .filter(t => typeof t === 'number' && t > 0);
             
             if (soloSolves.length > 0) {
-              // Calculate average of all solo solves
+              // Calculate average of all solo solves (solves are stored in seconds)
               const avg = soloSolves.reduce((a, b) => a + b, 0) / soloSolves.length;
-              baseTimeMs = avg;
+              baseTimeMs = avg * 1000; // Convert to milliseconds for internal timer
             }
           } else {
             // Fallback to rank-based if no solves yet (though tournament should be locked)
@@ -187,14 +187,15 @@ export const TournamentMatch: React.FC<TournamentMatchProps> = ({ user, onSolveC
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    const finalTime = performance.now() - startTimeRef.current;
-    setUserTime(finalTime);
+    const finalTimeMs = performance.now() - startTimeRef.current;
+    const finalTimeSeconds = finalTimeMs / 1000;
+    setUserTime(finalTimeMs);
     setIsUserFinished(true);
     setMatchState('finished');
     
     // Determine if user won based on current opponent time or final time if opponent finished
-    const userWon = !isOpponentFinished || finalTime < opponentFinalTime;
-    onSolveComplete(finalTime, userWon);
+    const userWon = !isOpponentFinished || finalTimeMs < opponentFinalTime;
+    onSolveComplete(finalTimeSeconds, userWon);
   }, [onSolveComplete, isOpponentFinished, opponentFinalTime]);
 
   // Keyboard controls
