@@ -10,6 +10,13 @@ export interface StarVortexUser {
   knowledge: number;
   creation: number;
   linkedApps: string[];
+  titles?: string[];
+  achievements?: {
+    id: string;
+    name: string;
+    icon: string;
+    unlockedAt: any;
+  }[];
   lastSync?: any;
 }
 

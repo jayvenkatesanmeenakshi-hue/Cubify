@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, query, collection, orderBy, limit } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, query, collection, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Edit2, Save, X, Shield, Globe, Award, Lock, ExternalLink, Activity, Info, LogOut, CheckCircle2 } from 'lucide-react';
+import { Edit2, Save, X, Shield, Globe, Award, Lock, ExternalLink, Activity, Info, LogOut, CheckCircle2, Cpu, Zap, Star, LayoutGrid } from 'lucide-react';
 import { logout } from '../firebase';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useSearchParams } from 'react-router-dom';
+import { broadcastActivity } from '../services/ecosystemService';
 
 interface HomePageProps {
   user: User;
@@ -16,6 +18,11 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [activities, setActivities] = useState<any[]>([]);
+  const [searchParams] = useSearchParams();
+
+  const appId = searchParams.get('app_id');
+  const redirectUri = searchParams.get('redirect_uri');
+  const isAuthRequest = appId && redirectUri;
 
   useEffect(() => {
     // Listen for Profile Changes
@@ -48,10 +55,85 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
     setIsEditing(false);
   };
 
+  const handleAuthConfirm = async () => {
+    if (!appId || !redirectUri) return;
+
+    // Log the auth event
+    await broadcastActivity(user.uid, `Authorized ${appId} for secure data access.`, {
+      app: 'Passport',
+      type: 'auth_grant',
+      target_app: appId
+    });
+
+    // Generate a simulated secure token
+    const secureToken = btoa(`${user.uid}:${Date.now()}:${Math.random()}`).substring(0, 32);
+    
+    // Redirect with the token and ID
+    const callbackUrl = new URL(redirectUri);
+    callbackUrl.searchParams.set('passport_id', user.uid);
+    callbackUrl.searchParams.set('auth_token', secureToken);
+    
+    window.location.href = callbackUrl.toString();
+  };
+
   if (!profile) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">SYNCHRONIZING PASSPORT...</div>;
 
   const auraPoints = (profile.points || 0) + (profile.skill || 0) + (profile.knowledge || 0) + (profile.creation || 0);
   const auraLevel = Math.floor(Math.sqrt(auraPoints / 10)) || 1;
+
+  if (isAuthRequest) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-6 flex items-center justify-center relative overflow-hidden">
+        {/* Ambient background */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-2xl shadow-2xl relative z-10"
+        >
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="p-5 bg-indigo-600 rounded-[2rem] shadow-[0_0_40px_rgba(79,70,229,0.4)] mb-8 animate-pulse">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-2">Access Request</h1>
+            <div className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-6">Protocol ID: {appId}</div>
+            
+            <p className="text-slate-400 leading-relaxed font-medium">
+              The application <strong className="text-white">{appId}</strong> is requesting verification of your StarVortex identity. This will grant them access to your global profile and Aura level.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-slate-950 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+              <img src={profile.photoURL} alt="" className="w-10 h-10 rounded-lg object-cover grayscale" />
+              <div className="text-left">
+                <div className="text-xs font-black text-white uppercase italic">{profile.displayName}</div>
+                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Global Aura Lvl {auraLevel}</div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleAuthConfirm}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
+            >
+              Verify Identification
+            </button>
+            <button 
+              onClick={() => window.history.back()}
+              className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-[0.2em] rounded-2xl transition-all border border-white/5"
+            >
+              Deny Access
+            </button>
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-center gap-2 text-[8px] font-black text-slate-600 uppercase tracking-widest">
+            <Lock className="w-2.5 h-2.5" /> End-to-end encrypted connection
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-6 pb-20">
@@ -110,7 +192,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                       ID: {profile.friendId}
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400">
-                      Protocol: PASSPORT_v2
+                      Rank: {(auraLevel >= 10 ? 'ELITE' : 'INITIATE')}
                     </div>
                   </div>
                 </>
@@ -126,7 +208,35 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
         </header>
 
         <div className="grid lg:grid-cols-12 gap-8">
-          {/* Left Column: Ecosystem Status */}
+          {/* Left Column: Ecosystem & Modules */}
+          <div className="lg:col-span-4 space-y-8">
+            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
+                <Cpu className="w-5 h-5 text-indigo-500" /> Attributes
+              </h2>
+              <div className="space-y-4">
+                <AttributeBar label="Skill" value={profile.skill || 0} color="indigo" />
+                <AttributeBar label="Knowledge" value={profile.knowledge || 0} color="emerald" />
+                <AttributeBar label="Creation" value={profile.creation || 0} color="orange" />
+                <AttributeBar label="Reputation" value={profile.points || 0} color="purple" />
+              </div>
+            </section>
+
+            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
+                <LayoutGrid className="w-5 h-5 text-purple-500" /> Achievements
+              </h2>
+              <div className="grid grid-cols-4 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <div key={i} className={`aspect-square rounded-xl flex items-center justify-center border ${i <= (profile.achievements?.length || 0) + 2 ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-white/5 border-white/5 text-slate-700'}`}>
+                    <Star className="w-5 h-5" />
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column: Dynamic Feed & Integration */}
           <div className="lg:col-span-8 space-y-8">
             <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
               <div className="flex items-center justify-between mb-8">
@@ -137,134 +247,84 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <AppLinkCard 
-                  name="Passport" 
-                  description="Core Identity & Primary Auth Node"
-                  isLinked={true}
-                  color="indigo"
-                />
-                <AppLinkCard 
-                  name="GrindOS" 
-                  description="Central Intelligence & Meta-Progression"
-                  isLinked={profile.appsUsed?.includes('GrindOS')}
-                  color="blue"
-                />
-                <AppLinkCard 
-                  name="FireInk" 
-                  description="Creative Core & Narrative Synthesis"
-                  isLinked={profile.appsUsed?.includes('FireInk')}
-                  color="orange"
-                />
-                <AppLinkCard 
-                  name="ExplainerX" 
-                  description="Knowledge Archive & Mental Training"
-                  isLinked={profile.appsUsed?.includes('ExplainerX')}
-                  color="emerald"
-                />
-                 <AppLinkCard 
-                  name="Chronos" 
-                  description="Temporal Archive & Historic Simulation"
-                  isLinked={profile.appsUsed?.includes('Chronos')}
-                  color="purple"
-                />
+                <AppLinkCard name="Passport" description="Core Identity Node" isLinked={true} color="indigo" />
+                <AppLinkCard name="GrindOS" description="Intelligence Ops" isLinked={profile.appsUsed?.includes('GrindOS')} color="blue" />
+                <AppLinkCard name="FireInk" description="Creative Node" isLinked={profile.appsUsed?.includes('FireInk')} color="orange" />
+                <AppLinkCard name="ExplainerX" description="Archive Module" isLinked={profile.appsUsed?.includes('ExplainerX')} color="emerald" />
               </div>
             </section>
 
-            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">
-                  <Activity className="w-5 h-5 text-emerald-500" /> Logged Activities
-                </h2>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Real-time Stream</div>
-              </div>
-
-              <div className="space-y-4">
-                {activities.length > 0 ? activities.map(activity => (
-                  <div key={activity.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-900/50 rounded-2xl border border-white/5 gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1 p-1 bg-slate-800 rounded-lg text-slate-400">
-                        <Lock className="w-3 h-3" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-200">{activity.description}</div>
-                        <div className="text-[10px] font-mono text-slate-500">
-                          {activity.timestamp?.toDate ? activity.timestamp.toDate().toLocaleString() : 'Just now'}
-                        </div>
-                      </div>
-                    </div>
-                    {activity.metadata?.app && (
-                      <div className="px-3 py-1 bg-slate-800/50 rounded-lg border border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                        NODE: {activity.metadata.app}
-                      </div>
-                    )}
-                  </div>
-                )) : (
-                  <div className="text-center py-12 text-slate-600 font-mono text-sm tracking-widest">NO RECENT LOGS DETECTED</div>
-                )}
-              </div>
-            </section>
-          </div>
-
-          {/* Right Column: Security & Profile */}
-          <div className="lg:col-span-4 space-y-8">
-             <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
-              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-6">
-                <Lock className="w-5 h-5 text-red-500" /> Security
-              </h2>
-              <div className="space-y-6">
-                <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-xs font-black text-slate-400">Protocol Access</div>
-                    <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-black rounded uppercase">Secure</div>
-                  </div>
-                  <div className="text-sm text-slate-500 leading-relaxed font-mono">
-                    Session established from recognized orbital sector. Multi-factor encryption active.
-                  </div>
+            <div className="grid md:grid-cols-2 gap-8">
+              <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-emerald-500" /> Security Log
+                  </h2>
                 </div>
 
                 <div className="space-y-4">
-                  <button className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-left">
-                    <div className="flex items-center gap-3">
-                      <Lock className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-bold">Update Encryption</span>
+                  {activities.length > 0 ? activities.slice(0, 5).map(activity => (
+                    <div key={activity.id} className="flex gap-4 p-3 bg-slate-900/50 rounded-xl border border-white/5">
+                      <div className="mt-1">
+                        <Lock className="w-3 h-3 text-slate-500" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-200">{activity.description}</div>
+                        <div className="text-[8px] font-mono text-slate-600 mt-1 uppercase">
+                          {activity.timestamp?.toDate ? activity.timestamp.toDate().toLocaleTimeString() : '...'}
+                        </div>
+                      </div>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-slate-600" />
-                  </button>
-                  <button className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all text-left">
-                    <div className="flex items-center gap-3">
-                      <Info className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-bold">Passport Logs</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-slate-600" />
+                  )) : (
+                    <div className="text-center py-8 text-slate-700 font-mono text-[10px] tracking-widest uppercase">STREAM IDLE</div>
+                  )}
+                </div>
+              </section>
+
+              <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
+                  <Lock className="w-5 h-5 text-red-500" /> Terminal
+                </h2>
+                <div className="space-y-4">
+                  <button className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group">
+                    <Cpu className="w-4 h-4 text-indigo-400" />
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-300">Rotate Keys</span>
                   </button>
                   <button 
                     onClick={logout}
-                    className="w-full flex items-center justify-between p-4 bg-red-600/10 hover:bg-red-600/20 rounded-2xl border border-red-600/20 transition-all text-left group"
+                    className="w-full flex items-center gap-3 p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group"
                   >
-                    <div className="flex items-center gap-3">
-                      <LogOut className="w-4 h-4 text-red-400" />
-                      <span className="text-sm font-bold text-red-400">Terminate Session</span>
-                    </div>
+                    <LogOut className="w-4 h-4 text-red-500" />
+                    <span className="text-xs font-black uppercase tracking-widest text-red-500">End Session</span>
                   </button>
                 </div>
-              </div>
-            </section>
-
-            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl text-center">
-              <Award className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-              <h2 className="text-xl font-black uppercase tracking-widest mb-2">Voyager Status</h2>
-              <div className="text-sm text-slate-400 font-medium leading-relaxed mb-6">
-                You have achieved <strong>Class II</strong> ecosystem status. Continue syncing across nodes to increase your Aura level.
-              </div>
-              <div className="h-2 bg-slate-900 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-yellow-500 w-[65%]" />
-              </div>
-              <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                650 / 1000 Aura for Rank Elevation
-              </div>
-            </section>
+              </section>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const AttributeBar = ({ label, value, color }: { label: string, value: number, color: string }) => {
+  const colors: any = {
+    indigo: 'bg-indigo-500',
+    emerald: 'bg-emerald-500',
+    orange: 'bg-orange-500',
+    purple: 'bg-purple-500'
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+        <span className="text-slate-500">{label}</span>
+        <span className="text-white">{value}</span>
+      </div>
+      <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+        <div 
+          className={`h-full ${colors[color]} transition-all duration-1000`} 
+          style={{ width: `${Math.min(100, (value / 500) * 100)}%` }} 
+        />
       </div>
     </div>
   );
@@ -288,7 +348,7 @@ const AppLinkCard = ({ name, description, isLinked, color }: { name: string, des
   };
 
   return (
-    <div className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden bg-slate-900/30 ${isLinked ? colorClasses[color] : 'border-white/5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:bg-white/5'}`}>
+    <div className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden bg-slate-900/30 ${isLinked ? colorClasses[color] : 'border-white/5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100'}`}>
       <div className="flex items-start justify-between mb-4">
         <h3 className={`text-xl font-black uppercase tracking-tighter ${isLinked ? textClasses[color] : 'text-slate-400'}`}>
           {name}
@@ -296,13 +356,13 @@ const AppLinkCard = ({ name, description, isLinked, color }: { name: string, des
         {isLinked ? (
           <CheckCircle2 className={`w-5 h-5 ${textClasses[color]}`} />
         ) : (
-          <Lock className="w-5 h-5 text-slate-600" />
+          <Lock className="w-5 h-5 text-slate-800" />
         )}
       </div>
-      <p className="text-slate-400 text-xs font-medium leading-relaxed mb-6">{description}</p>
+      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-tight mb-6">{description}</p>
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-black uppercase tracking-widest ${isLinked ? textClasses[color] : 'text-slate-600'}`}>
-          {isLinked ? 'Synchronized' : 'Node Locked'}
+        <span className={`text-[9px] font-black uppercase tracking-widest ${isLinked ? textClasses[color] : 'text-slate-700'}`}>
+          {isLinked ? 'Synchronized' : 'Offline'}
         </span>
         {isLinked && (
           <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all">

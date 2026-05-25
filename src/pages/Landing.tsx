@@ -1,9 +1,15 @@
 import React from 'react';
-import { LogIn, Shield, ShieldCheck, Zap, Globe, Sparkles } from 'lucide-react';
+import { LogIn, Shield, ShieldCheck, Zap, Globe, Sparkles, Lock } from 'lucide-react';
 import { loginWithGoogle } from '../firebase';
 import { motion } from 'motion/react';
+import { useSearchParams } from 'react-router-dom';
 
 export const Landing = () => {
+  const [searchParams] = useSearchParams();
+  const appId = searchParams.get('app_id');
+  const redirectUri = searchParams.get('redirect_uri');
+  const isAuthRequest = appId && redirectUri;
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
       {/* Dynamic Background Elements */}
@@ -41,18 +47,29 @@ export const Landing = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-3xl"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold mb-8 border border-indigo-500/20 uppercase tracking-[0.2em]">
-            <Zap className="w-3.5 h-3.5" />
-            Ecosystem V2 Protocol Active
-          </div>
+          {isAuthRequest ? (
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-indigo-600/20 text-indigo-300 text-sm font-black mb-8 border border-indigo-500/30 uppercase tracking-[0.2em] animate-bounce">
+              <Lock className="w-4 h-4 text-indigo-400" />
+              Auth Request from {appId}
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold mb-8 border border-indigo-500/20 uppercase tracking-[0.2em]">
+              <Zap className="w-3.5 h-3.5" />
+              Ecosystem V2 Protocol Active
+            </div>
+          )}
+
           <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[0.85]">
             One Identity.<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 italic">
               Infinite Access.
             </span>
           </h1>
+          
           <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
-            StarVortex Passport is your high-security gateway to the neural lattice. Connect your Aura, manage your assets, and authenticate across every node in the grid.
+            {isAuthRequest 
+              ? `You must establish a secure session to authenticate with ${appId}. Connect your StarVortex Passport to proceed with node synchronization.`
+              : "StarVortex Passport is your high-security gateway to the neural lattice. Connect your Aura, manage your assets, and authenticate across every node in the grid."}
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
