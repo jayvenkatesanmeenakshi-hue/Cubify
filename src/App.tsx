@@ -7,7 +7,7 @@ import { SolverPage } from './pages/SolverPage';
 import { AICoachPage } from './pages/AICoachPage';
 import { generateScramble } from './lib/cube';
 import { auth, db, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, getDoc, setDoc } from './firebase';
-import { syncEcosystemUser } from './services/ecosystemService';
+import { syncEcosystemUser, broadcastActivity, getEcosystemProfile } from './services/ecosystemService';
 import { User } from 'firebase/auth';
 import { SolveRecord, PuzzleType } from './types';
 import { handleFirestoreError, OperationType } from './lib/firestoreError';
@@ -157,6 +157,7 @@ export default function App() {
     setScramble(generateScramble(puzzle)); // Generate new scramble immediately
 
     if (user) {
+      const userRef = doc(db, 'users', user.uid);
       try {
         await addDoc(collection(db, 'solves'), {
           uid: user.uid,
@@ -167,12 +168,23 @@ export default function App() {
           puzzle: puzzle
         });
 
+        // Ecosystem Integration: Fetch profile for multipliers and streaks
+        const ecosystemProfile = await getEcosystemProfile(user.uid);
+        const energyLevel = ecosystemProfile?.clearday?.energyLevel || 'High';
+        const xpMultiplier = energyLevel === 'Low' ? 0.5 : 1.0;
+
+        // Broadcast basic solve activity
+        await broadcastActivity(user.uid, `Completed ${puzzle} solve in ${time.toFixed(2)}s`, {
+          time,
+          puzzle,
+          energyLevel
+        });
+
         // Tournament logic
         const isTournament = window.location.pathname.includes('/tournament/match') || new URLSearchParams(window.location.search).get('mode') === 'tournament';
 
         if (isTournament) {
           const today = new Date().toISOString().split('T')[0];
-          const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
           
           if (userSnap.exists()) {
@@ -184,9 +196,16 @@ export default function App() {
               if (wonTournamentMatch !== false) { // If true or undefined (legacy)
                 const timeInSeconds = time;
                 const speedBonus = Math.max(0, Math.floor(100 - timeInSeconds));
-                pointsEarned = 10 + speedBonus;
+                pointsEarned = (10 + speedBonus) * xpMultiplier;
+
+                // Broadcast Tournament Victory
+                await broadcastActivity(user.uid, `Won Tournament Match! Time: ${time.toFixed(2)}s`, {
+                  type: 'tournament_win',
+                  points: pointsEarned,
+                  multiplier: xpMultiplier
+                });
               } else {
-                // Lost the race, maybe just 5 participation points? Or 0? Let's say 0 for now.
+                // Lost the race
                 pointsEarned = 0;
               }
 
@@ -198,6 +217,12 @@ export default function App() {
             }
           }
         }
+        
+        // Final Ecosystem Mandate Update
+        await setDoc(userRef, {
+          lastActive: serverTimestamp()
+        }, { merge: true });
+
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, 'solves');
       }

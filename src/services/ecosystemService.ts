@@ -1,5 +1,5 @@
 import { db } from '../firebase'; 
-import { doc, setDoc, getDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, getDocFromServer, collection, addDoc } from 'firebase/firestore';
 
 export const syncEcosystemUser = async (user: any, appName: string) => {
   if (!user) return;
@@ -16,10 +16,44 @@ export const syncEcosystemUser = async (user: any, appName: string) => {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      lastLogin: serverTimestamp(),
+      lastActive: serverTimestamp(), // Standardized metadata
       appsUsed: appsUsed
     }, { merge: true });
   } catch (error) {
     console.error('Ecosystem Sync Failed:', error);
+  }
+};
+
+/**
+ * Broadcasts an event to the global Activity Stream (/users/{userId}/activities/{activityId})
+ */
+export const broadcastActivity = async (userId: string, description: string, metadata: any = {}) => {
+  try {
+    const activityRef = collection(db, 'users', userId, 'activities');
+    await addDoc(activityRef, {
+      description: `CUBIFY: ${description}`,
+      timestamp: serverTimestamp(),
+      metadata: {
+        app: 'Cubify',
+        ...metadata
+      }
+    });
+  } catch (error) {
+    console.error('Failed to broadcast ecosystem activity:', error);
+  }
+};
+
+/**
+ * Checks for cross-app dependencies (Clearday energy level, GrindOS streak, etc.)
+ */
+export const getEcosystemProfile = async (userId: string) => {
+  try {
+    const docRef = doc(db, 'users', userId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) return null;
+    return snap.data();
+  } catch (err) {
+    console.error('Failed to fetch ecosystem profile:', err);
+    return null;
   }
 };

@@ -5,9 +5,10 @@ import { db } from '../firebase';
 import { SolveRecord } from '../types';
 import { getRankFromPoints, getNextRank } from '../lib/ranks';
 import { RankBadge } from '../components/RankBadge';
-import { Edit2, Save, X, Activity, Clock, Trophy, TrendingUp } from 'lucide-react';
+import { Edit2, Save, X, Activity, Clock, Trophy, TrendingUp, Zap, ShieldCheck, Globe } from 'lucide-react';
 import { formatTime } from '../lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getEcosystemProfile } from '../services/ecosystemService';
 
 interface HomePageProps {
   user: User;
@@ -78,6 +79,10 @@ export const HomePage: React.FC<HomePageProps> = ({ user, solves }) => {
   const ao12 = calculateAverage(12);
   const ao100 = calculateAverage(100);
 
+  const energyLevel = profile.clearday?.energyLevel || 'High';
+  const streakCount = profile.grindos?.streakCount || 0;
+  const xpMultiplier = energyLevel === 'Low' ? 0.5 : 1.0;
+
   // Prepare chart data (chronological order)
   const chartData = [...solves].reverse().map((solve, index) => ({
     solveNumber: index + 1,
@@ -86,6 +91,40 @@ export const HomePage: React.FC<HomePageProps> = ({ user, solves }) => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
+      {/* Ecosystem Status Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={`p-4 rounded-2xl border flex items-center gap-4 ${energyLevel === 'Low' ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+          <div className={`p-2 rounded-xl ${energyLevel === 'Low' ? 'bg-orange-500' : 'bg-green-500'}`}>
+            <Zap className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Clearday Energy</div>
+            <div className="text-sm font-bold flex items-center gap-2">
+              {energyLevel} 
+              {xpMultiplier !== 1.0 && <span className="text-[10px] bg-orange-200 text-orange-700 px-1.5 py-0.5 rounded leading-none">-{ (1 - xpMultiplier) * 100 }% XP</span>}
+            </div>
+          </div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-center gap-4">
+          <div className="p-2 bg-blue-500 rounded-xl text-white">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">GrindOS Streak</div>
+            <div className="text-sm font-bold">{streakCount} Days</div>
+          </div>
+        </div>
+        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl flex items-center gap-4">
+          <div className="p-2 bg-indigo-500 rounded-xl text-white">
+            <Globe className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Master Grid Sync</div>
+            <div className="text-sm font-bold">Standardized</div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row items-start justify-between gap-6">
           <div className="flex items-center gap-6">
