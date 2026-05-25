@@ -1,11 +1,25 @@
-export type PuzzleType = '2x2' | '3x3' | '4x4' | 'Pyraminx';
-
-export interface SolveRecord {
-  id?: string;
+export interface StarVortexUser {
   uid: string;
-  time: number;
-  scramble: string;
-  date: any; // Firestore Timestamp
-  penalty?: string;
-  puzzle?: PuzzleType;
+  displayName: string;
+  photoURL: string;
+  friendId: string;
+  bio?: string;
+  aura: number;
+  points: number;
+  skill: number;
+  knowledge: number;
+  creation: number;
+  linkedApps: string[];
+  lastSync?: any;
+}
+
+export interface EcosystemActivity {
+  id?: string;
+  description: string;
+  timestamp: any;
+  metadata?: {
+    app: string;
+    xp?: number;
+    skillPoints?: number;
+  };
 }

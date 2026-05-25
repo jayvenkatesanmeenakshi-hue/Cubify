@@ -24,6 +24,9 @@ export const syncEcosystemUser = async (user: any, appName: string) => {
   }
 };
 
+export const APP_ID = 'PASSPORT';
+const NODE_TYPE = 'IDENTITY_HUB';
+
 /**
  * Broadcasts an event to the global Activity Stream (/users/{userId}/activities/{activityId})
  */
@@ -31,10 +34,11 @@ export const broadcastActivity = async (userId: string, description: string, met
   try {
     const activityRef = collection(db, 'users', userId, 'activities');
     await addDoc(activityRef, {
-      description: `CUBIFY: ${description}`,
+      description: `[${APP_ID}]: ${description}`,
       timestamp: serverTimestamp(),
       metadata: {
-        app: 'Cubify',
+        app: APP_ID,
+        nodeType: NODE_TYPE,
         ...metadata
       }
     });
@@ -44,7 +48,7 @@ export const broadcastActivity = async (userId: string, description: string, met
 };
 
 /**
- * Checks for cross-app dependencies (Clearday energy level, GrindOS streak, etc.)
+ * Checks for cross-app dependencies (GrindOS streak, etc.)
  */
 export const getEcosystemProfile = async (userId: string) => {
   try {

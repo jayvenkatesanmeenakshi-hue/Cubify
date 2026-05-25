@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from 'firebase/auth';
 import { db, collection, doc, setDoc, getDocs, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch } from '../firebase';
-import { MessageCircle, Users, UserPlus, Search, Send, Check, X, AlertCircle, Zap } from 'lucide-react';
-import { generateScramble } from '../lib/cube';
+import { MessageCircle, Users, UserPlus, Search, Send, Check, X, AlertCircle, Shield, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -85,10 +84,10 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
         status: 'pending',
         timestamp: serverTimestamp()
       });
-      toast.success('Friend request sent!');
+      toast.success('Communication request dispatched.');
     } catch (e) {
       console.error(e);
-      toast.error('Error sending request.');
+      toast.error('Dispatch failure.');
     }
   };
 
@@ -96,11 +95,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
     if (!user) return;
     try {
       const batch = writeBatch(db);
-      
-      // Update request status
       batch.update(doc(db, 'friend_requests', req.id), { status: 'accepted' });
-      
-      // Create chat
       const chatRef = doc(collection(db, 'chats'));
       batch.set(chatRef, {
         participants: [user.uid, req.from],
@@ -109,14 +104,13 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
           [req.from]: req.fromProfile
         },
         updatedAt: serverTimestamp(),
-        lastMessage: 'You are now friends!'
+        lastMessage: 'Synchronized with StarVortex Identity.'
       });
-      
       await batch.commit();
       setActiveTab('messages');
     } catch (e) {
       console.error(e);
-      toast.error('Error accepting request.');
+      toast.error('Synchronization failure.');
     }
   };
 
@@ -133,83 +127,21 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChat || !user) return;
-    
     const msgText = newMessage;
     setNewMessage('');
-    
     try {
       const batch = writeBatch(db);
       const msgRef = doc(collection(db, `chats/${activeChat.id}/messages`));
       const chatRef = doc(db, 'chats', activeChat.id);
-      
       batch.set(msgRef, {
         text: msgText,
         senderId: user.uid,
         timestamp: serverTimestamp()
       });
-      
       batch.update(chatRef, {
         lastMessage: msgText,
         updatedAt: serverTimestamp()
       });
-      
-      await batch.commit();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const challengeRace = async () => {
-    if (!activeChat || !user) return;
-    
-    const otherUserId = activeChat.participants.find((id: string) => id !== user.uid);
-    const otherProfile = activeChat.profiles[otherUserId];
-    
-    try {
-      const newMatchRef = doc(collection(db, 'matches'));
-      const matchData = {
-        scramble: generateScramble('3x3'),
-        status: 'waiting',
-        createdAt: serverTimestamp(),
-        players: {
-          [user.uid]: {
-            displayName: user.displayName || 'Unknown',
-            photoURL: user.photoURL || '',
-            rank: 'UNRANKED',
-            ready: false,
-            time: null,
-            state: 'idle'
-          },
-          [otherUserId]: {
-            displayName: otherProfile?.displayName || 'Unknown',
-            photoURL: otherProfile?.photoURL || '',
-            rank: 'UNRANKED',
-            ready: false,
-            time: null,
-            state: 'idle'
-          }
-        }
-      };
-      
-      const batch = writeBatch(db);
-      batch.set(newMatchRef, matchData);
-      
-      const msgRef = doc(collection(db, `chats/${activeChat.id}/messages`));
-      const chatRef = doc(db, 'chats', activeChat.id);
-      
-      const msgText = `[RACE_CHALLENGE:${newMatchRef.id}]`;
-      
-      batch.set(msgRef, {
-        text: msgText,
-        senderId: user.uid,
-        timestamp: serverTimestamp()
-      });
-      
-      batch.update(chatRef, {
-        lastMessage: 'Sent a race challenge!',
-        updatedAt: serverTimestamp()
-      });
-      
       await batch.commit();
     } catch (e) {
       console.error(e);
@@ -218,234 +150,214 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
 
   if (!user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-slate-500">
-        <AlertCircle className="w-16 h-16 mb-4 text-slate-300" />
-        <h1 className="text-2xl font-bold text-slate-700 mb-2">Sign in Required</h1>
-        <p>Please sign in to access messages and friends.</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-500 font-mono tracking-widest uppercase">
+        <Shield className="w-16 h-16 mb-6 text-slate-800" />
+        <h1 className="text-xl font-black text-white mb-2">Protocol Unauthorized</h1>
+        <p className="text-sm">Please identify with StarVortex Passport.</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full max-w-6xl mx-auto p-4 md:p-6">
-      <div className="flex h-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        
-        {/* Left Sidebar */}
-        <div className={`w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col ${activeChat ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-4 border-b border-slate-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-slate-800">{user.displayName}</h2>
-              <div className="bg-slate-100 px-3 py-1 rounded-full text-xs font-mono text-slate-600 font-medium border border-slate-200">
-                ID: {myFriendId || '...'}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => { setActiveTab('messages'); setActiveChat(null); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'messages' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                Messages
-              </button>
-              <button 
-                onClick={() => { setActiveTab('requests'); setActiveChat(null); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors relative ${activeTab === 'requests' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                Requests
-                {requests.length > 0 && (
-                  <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                )}
-              </button>
-              <button 
-                onClick={() => { setActiveTab('add'); setActiveChat(null); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === 'add' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                Add
-              </button>
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-4 md:p-8 flex flex-col items-center">
+      <div className="w-full max-w-6xl h-[calc(100vh-120px)] flex flex-col">
+        <header className="flex items-center justify-between mb-8">
+           <Link to="/" className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 transition-all border border-white/10">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          <div className="text-center flex-1">
+             <h1 className="text-2xl font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+              <MessageCircle className="w-6 h-6 text-indigo-500" /> Comm Stream
+             </h1>
+             <div className="text-[10px] font-black font-mono text-slate-500 tracking-[0.2em] mt-1 uppercase">Secure Neural Intersection</div>
           </div>
+          <div className="hidden md:block w-9" /> {/* Spacer */}
+        </header>
 
-          <div className="flex-1 overflow-y-auto p-2">
-            {activeTab === 'messages' && (
-              chats.length === 0 ? (
-                <div className="text-center p-8 text-slate-400 text-sm">No messages yet.</div>
-              ) : (
-                chats.map(chat => {
-                  const otherUserId = chat.participants.find((id: string) => id !== user.uid);
-                  const otherProfile = chat.profiles[otherUserId];
-                  return (
-                    <button 
-                      key={chat.id}
-                      onClick={() => setActiveChat(chat)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${activeChat?.id === chat.id ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
-                    >
-                      <img src={otherProfile?.photoURL} alt="" className="w-12 h-12 rounded-full bg-slate-200 object-cover" referrerPolicy="no-referrer" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-800 truncate">{otherProfile?.displayName}</div>
-                        <div className="text-sm text-slate-500 truncate">{chat.lastMessage}</div>
-                      </div>
-                    </button>
-                  )
-                })
-              )
-            )}
-
-            {activeTab === 'requests' && (
-              requests.length === 0 ? (
-                <div className="text-center p-8 text-slate-400 text-sm">No pending requests.</div>
-              ) : (
-                requests.map(req => (
-                  <div key={req.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl mb-2">
-                    <div className="flex items-center gap-3">
-                      <img src={req.fromProfile?.photoURL} alt="" className="w-10 h-10 rounded-full bg-slate-200 object-cover" referrerPolicy="no-referrer" />
-                      <div className="font-medium text-slate-800 text-sm">{req.fromProfile?.displayName}</div>
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => acceptRequest(req)} className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors">
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => declineRequest(req)} className="p-2 bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300 transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )
-            )}
-
-            {activeTab === 'add' && (
-              <div className="p-2">
-                <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-                  <input 
-                    type="text" 
-                    placeholder="Enter 8-digit ID" 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 bg-slate-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                    maxLength={8}
-                  />
-                  <button type="submit" className="bg-slate-900 text-white p-2 rounded-xl hover:bg-slate-800 transition-colors">
-                    <Search className="w-5 h-5" />
-                  </button>
-                </form>
-
-                {searchResults.map(res => (
-                  <div key={res.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <img src={res.photoURL} alt="" className="w-10 h-10 rounded-full bg-slate-200 object-cover" referrerPolicy="no-referrer" />
-                      <div className="font-medium text-slate-800 text-sm">{res.displayName}</div>
-                    </div>
-                    {res.id !== user.uid && (
-                      <button onClick={() => sendRequest(res.id)} className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100 transition-colors">
-                        Add
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {searchResults.length === 0 && searchQuery && (
-                  <div className="text-center text-sm text-slate-400 mt-4">Search for a friend's ID to add them.</div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right Content Area (Chat) */}
-        <div className={`flex-1 flex flex-col bg-slate-50 ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
-          {activeChat ? (
-            <>
-              {/* Chat Header */}
-              <div className="h-16 border-b border-slate-200 bg-white flex items-center px-6 gap-4 justify-between">
-                <div className="flex items-center gap-4">
-                  <button className="md:hidden text-slate-500" onClick={() => setActiveChat(null)}>
-                    <X className="w-6 h-6" />
-                  </button>
-                  {(() => {
-                    const otherUserId = activeChat.participants.find((id: string) => id !== user.uid);
-                    const otherProfile = activeChat.profiles[otherUserId];
-                    return (
-                      <>
-                        <img src={otherProfile?.photoURL} alt="" className="w-10 h-10 rounded-full bg-slate-200 object-cover" referrerPolicy="no-referrer" />
-                        <div className="font-bold text-slate-800">{otherProfile?.displayName}</div>
-                      </>
-                    );
-                  })()}
+        <div className="flex-1 flex bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-xl overflow-hidden">
+          {/* Left Sidebar */}
+          <div className={`w-full md:w-80 lg:w-96 border-r border-white/10 flex flex-col ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+            <div className="p-6 border-b border-white/10 space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="text-[12px] font-black text-indigo-400 uppercase tracking-widest">{user.displayName}</div>
+                <div className="bg-indigo-500/10 px-3 py-1 rounded-full text-[10px] font-black text-indigo-400 border border-indigo-500/20 uppercase">
+                  ID: {myFriendId}
                 </div>
-                <button 
-                  onClick={challengeRace}
-                  className="flex items-center gap-2 bg-zinc-950 hover:bg-zinc-900 text-[#00FF00] px-4 py-2 rounded-lg font-mono text-sm font-bold transition-colors border border-[#00FF00]/30 shadow-sm"
-                >
-                  <Zap className="w-4 h-4" />
-                  RACE
-                </button>
               </div>
+              <div className="flex gap-2">
+                {['messages', 'requests', 'add'].map((tab: any) => (
+                  <button 
+                    key={tab}
+                    onClick={() => { setActiveTab(tab); setActiveChat(null); }}
+                    className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all border ${activeTab === tab ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'}`}
+                  >
+                    {tab}
+                    {tab === 'requests' && requests.length > 0 && <span className="ml-1 text-red-500">•</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.map((msg, idx) => {
-                  const isMe = msg.senderId === user.uid;
-                  const isChallenge = msg.text.startsWith('[RACE_CHALLENGE:');
-                  
-                  if (isChallenge) {
-                    const matchId = msg.text.replace('[RACE_CHALLENGE:', '').replace(']', '');
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              {activeTab === 'messages' && (
+                chats.length === 0 ? (
+                  <div className="text-center py-20 text-slate-600 font-mono text-[10px] tracking-widest">NO ACTIVE STREAMS</div>
+                ) : (
+                  chats.map(chat => {
+                    const otherUserId = chat.participants.find((id: string) => id !== user.uid);
+                    const otherProfile = chat.profiles[otherUserId];
+                    const isActive = activeChat?.id === chat.id;
+                    return (
+                      <button 
+                        key={chat.id}
+                        onClick={() => setActiveChat(chat)}
+                        className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all text-left mb-2 group ${isActive ? 'bg-indigo-600/20 border border-indigo-600/30' : 'hover:bg-white/5 border border-transparent'}`}
+                      >
+                        <img src={otherProfile?.photoURL} alt="" className="w-12 h-12 rounded-2xl bg-white/5 object-cover grayscale group-hover:grayscale-0 transition-all border border-white/10" referrerPolicy="no-referrer" />
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-black text-sm uppercase tracking-tight ${isActive ? 'text-white' : 'text-slate-300'}`}>{otherProfile?.displayName}</div>
+                          <div className="text-[10px] text-slate-500 truncate font-medium mt-0.5 uppercase tracking-tighter">{chat.lastMessage}</div>
+                        </div>
+                      </button>
+                    )
+                  })
+                )
+              )}
+
+              {activeTab === 'requests' && (
+                requests.length === 0 ? (
+                  <div className="text-center py-20 text-slate-600 font-mono text-[10px] tracking-widest text-center">PENDING QUEUE EMPTY</div>
+                ) : (
+                  requests.map(req => (
+                    <div key={req.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-3xl mb-3">
+                      <div className="flex items-center gap-3">
+                        <img src={req.fromProfile?.photoURL} alt="" className="w-10 h-10 rounded-xl bg-white/5 object-cover border border-white/10" referrerPolicy="no-referrer" />
+                        <div className="font-black text-[12px] text-slate-300 uppercase tracking-tight">{req.fromProfile?.displayName}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => acceptRequest(req)} className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => declineRequest(req)} className="p-2 bg-white/10 text-slate-400 rounded-xl hover:bg-white/20 transition-all">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )
+              )}
+
+              {activeTab === 'add' && (
+                <div className="space-y-6">
+                  <form onSubmit={handleSearch} className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="ENTER NEURAL ID..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-[10px] font-black font-mono focus:ring-1 focus:ring-indigo-500 outline-none text-white tracking-[0.2em]"
+                      maxLength={8}
+                    />
+                    <button type="submit" className="absolute right-2 top-2 p-1.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500">
+                      <Search className="w-4 h-4" />
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {searchResults.map(res => (
+                      <div key={res.id} className="flex items-center justify-between p-4 bg-indigo-600/5 border border-indigo-600/10 rounded-3xl">
+                        <div className="flex items-center gap-3">
+                          <img src={res.photoURL} alt="" className="w-10 h-10 rounded-xl bg-white/5 object-cover border border-white/10" referrerPolicy="no-referrer" />
+                          <div className="font-black text-[11px] text-slate-300 uppercase tracking-widest">{res.displayName}</div>
+                        </div>
+                        {res.id !== user.uid && (
+                          <button onClick={() => sendRequest(res.id)} className="text-[9px] font-black bg-indigo-600 text-white px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-indigo-500 transition-all">
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Chat Area */}
+          <div className={`flex-1 flex flex-col bg-slate-900/30 backdrop-blur-sm ${!activeChat ? 'hidden md:flex' : 'flex'}`}>
+            {activeChat ? (
+              <>
+                <div className="h-20 border-b border-white/10 bg-white/5 flex items-center px-8 gap-4 justify-between backdrop-blur-md">
+                  <div className="flex items-center gap-4">
+                    <button className="md:hidden text-slate-400 p-2 bg-white/5 rounded-lg mr-2" onClick={() => setActiveChat(null)}>
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    {(() => {
+                      const otherUserId = activeChat.participants.find((id: string) => id !== user.uid);
+                      const otherProfile = activeChat.profiles[otherUserId];
+                      return (
+                        <>
+                          <img src={otherProfile?.photoURL} alt="" className="w-12 h-12 rounded-2xl bg-white/5 object-cover border border-white/10" referrerPolicy="no-referrer" />
+                          <div>
+                            <div className="font-black text-white uppercase tracking-widest text-lg italic">{otherProfile?.displayName}</div>
+                            <div className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mt-0.5 flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Encrypted Link Active
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-gradient-to-b from-indigo-500/5 to-transparent">
+                  {messages.map((msg, idx) => {
+                    const isMe = msg.senderId === user.uid;
                     return (
                       <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] rounded-2xl p-4 border-2 border-[#00FF00] bg-[#050505] text-[#00FF00] font-mono shadow-lg shadow-green-500/10`}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <Zap className="w-5 h-5" />
-                            <span className="font-bold tracking-widest">{isMe ? 'CHALLENGE SENT' : 'RACE CHALLENGE'}</span>
+                        <div className={`max-w-[70%] px-5 py-3 rounded-2xl relative shadow-2xl ${isMe ? 'bg-indigo-600 text-white rounded-br-[2px]' : 'bg-white/10 text-white border border-white/10 rounded-bl-[2px] backdrop-blur-sm'}`}>
+                          <p className="text-sm font-medium leading-relaxed tracking-tight">{msg.text}</p>
+                          <div className={`absolute bottom-[-18px] text-[8px] font-black font-mono text-slate-600 uppercase tracking-widest ${isMe ? 'right-0' : 'left-0'}`}>
+                            {msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                           </div>
-                          <p className="text-sm opacity-80 mb-4">{isMe ? 'Waiting for opponent to join...' : 'You have been challenged to a speedcube race!'}</p>
-                          <Link 
-                            to={`/race?matchId=${matchId}`}
-                            className="block w-full text-center bg-[#00FF00] text-black font-bold py-2 rounded hover:bg-[#00FF00]/90 transition-colors"
-                          >
-                            JOIN MATCH
-                          </Link>
                         </div>
                       </div>
                     );
-                  }
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
 
-                  return (
-                    <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${isMe ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'}`}>
-                        {msg.text}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
+                <div className="p-8 bg-white/5 border-t border-white/10 backdrop-blur-md">
+                  <form onSubmit={sendMessage} className="relative flex items-center">
+                    <input 
+                      type="text" 
+                      placeholder="ENTER NEURAL PACKET..." 
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-full px-8 py-4 text-sm font-medium focus:ring-2 focus:ring-indigo-600 outline-none text-white backdrop-blur-md placeholder:text-slate-600"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={!newMessage.trim()}
+                      className="absolute right-2 p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/20"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-700 font-mono text-[10px] tracking-[0.4em] uppercase">
+                <div className="w-24 h-24 border border-white/5 rounded-full flex items-center justify-center mb-8 bg-white/2">
+                   <MessageCircle className="w-10 h-10 opacity-10" />
+                </div>
+                SECURE STREAM WAITING...
               </div>
-
-              {/* Chat Input */}
-              <div className="p-4 bg-white border-t border-slate-200">
-                <form onSubmit={sendMessage} className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Message..." 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 bg-slate-100 border-none rounded-full px-6 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
-                  <button 
-                    type="submit" 
-                    disabled={!newMessage.trim()}
-                    className="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-              <MessageCircle className="w-16 h-16 mb-4 opacity-20" />
-              <p>Select a chat or start a new conversation</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-
       </div>
     </div>
   );
 };
+

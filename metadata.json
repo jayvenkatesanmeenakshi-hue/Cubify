@@ -1,5 +1,8 @@
 {
-  "name": "Cubify",
-  "description": "A professional speedcubing platform featuring a high-precision timer, AI-powered coaching, and global competition tracking.",
-  "requestFramePermissions": []
+  "name": "StarVortex Passport",
+  "description": "The centralized identity and authentication hub for the StarVortex Ecosystem. Manage your global profile, security, and Aura.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
