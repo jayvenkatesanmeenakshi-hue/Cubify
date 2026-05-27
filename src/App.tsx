@@ -9,6 +9,7 @@ import { Toaster } from 'sonner';
 
 import { SocialPage } from './pages/SocialPage';
 import { HomePage } from './pages/HomePage';
+import { PassportAuth } from './pages/PassportAuth';
 
 const AppRoutes = ({ user }: any) => {
   const location = useLocation();
@@ -29,6 +30,7 @@ const AppRoutes = ({ user }: any) => {
           </motion.div>
         } />
         <Route path="/social" element={<SocialPage user={user} />} />
+        <Route path="/passport" element={<PassportAuth user={user} />} />
       </Routes>
     </AnimatePresence>
   );

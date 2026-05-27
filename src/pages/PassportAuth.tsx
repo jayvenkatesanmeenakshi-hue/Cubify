@@ -1,0 +1,137 @@
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { auth } from '../firebase';
+import { motion } from 'motion/react';
+import { Shield, Lock, ArrowRight, ExternalLink } from 'lucide-react';
+
+export const PassportAuth = ({ user }: { user: any }) => {
+  const [searchParams] = useSearchParams();
+  const clientId = searchParams.get('client_id') || 'Unknown Alpha';
+  const redirectUri = searchParams.get('redirect_uri');
+
+  const handleAuthorize = () => {
+    if (!user || !redirectUri) return;
+
+    // Generate auth token (base64 encoded UID)
+    const authToken = btoa(user.uid);
+    const passportId = user.uid;
+
+    const url = new URL(redirectUri);
+    url.searchParams.append('passport_id', passportId);
+    url.searchParams.append('auth_token', authToken);
+
+    // Perform redirect
+    window.location.href = url.toString();
+  };
+
+  if (!user) {
+    // If user isn't logged in, they should be seeing the landing page logic
+    // but here we can just show a prompt to login first
+    return (
+      <div className="min-h-screen bg-passport-black flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0c0c0c] to-black">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full bg-[#080808] border border-passport-gold/20 p-10 rounded-[2.5rem] text-center"
+        >
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-passport-gold/10 rounded-2xl border border-passport-gold/20">
+              <Lock className="w-8 h-8 text-passport-gold" />
+            </div>
+          </div>
+          <h2 className="text-2xl text-white uppercase italic tracking-tighter mb-2">Neural Link Required</h2>
+          <p className="text-slate-500 font-thin text-xs leading-relaxed uppercase tracking-widest mb-8">
+            Identity verification is pending. Please return to the Gateway to authenticate.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="w-full py-4 bg-passport-gold text-passport-black uppercase tracking-[0.3em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all"
+          >
+            RETURN_TO_GATEWAY
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-passport-black flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0c0c0c] to-black">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-lg w-full bg-[#080808] border border-passport-gold/30 p-10 rounded-[2.5rem] relative shadow-2xl overflow-hidden font-thin"
+      >
+        {/* Visual accents */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-passport-gold/5 blur-3xl -mr-16 -mt-16" />
+        
+        <div className="flex items-center gap-4 mb-10">
+          <div className="p-3 bg-passport-gold rounded-2xl">
+            <Shield className="w-6 h-6 text-passport-black" />
+          </div>
+          <div>
+            <h1 className="text-xl text-white uppercase italic tracking-tighter">Passport Authorization</h1>
+            <div className="text-[10px] text-passport-gold uppercase tracking-[0.4em]">Secure Handshake Protocol</div>
+          </div>
+        </div>
+
+        <div className="bg-white/5 border border-white/5 p-8 rounded-3xl mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full border border-passport-gold/40 flex items-center justify-center mb-2">
+                <img src={user.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.uid}`} alt="" className="w-10 h-10 rounded-full grayscale" />
+              </div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest">Passport</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-passport-gold/30" />
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-passport-gold/10 border border-passport-gold/20 flex items-center justify-center mb-2">
+                <ExternalLink className="w-5 h-5 text-passport-gold" />
+              </div>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest">{clientId}</span>
+            </div>
+          </div>
+          
+          <p className="text-slate-300 text-xs leading-relaxed text-center mb-0">
+            Node <span className="text-passport-gold italic uppercase">{clientId}</span> is requesting access to your Neural Identity.
+          </p>
+        </div>
+
+        <div className="space-y-3 mb-10">
+          <div className="flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-widest">
+            <div className="w-1 h-1 bg-passport-gold rounded-full" />
+            Basic Identity (Display Name, Aura)
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-widest">
+            <div className="w-1 h-1 bg-passport-gold rounded-full" />
+            Unique Passport ID Verification
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-widest">
+            <div className="w-1 h-1 bg-passport-gold rounded-full" />
+            Cross-node Rank Synchronization
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <button 
+            onClick={handleAuthorize}
+            className="w-full py-5 bg-passport-gold text-passport-black uppercase tracking-[0.4em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(165,158,132,0.2)]"
+          >
+            Login to {clientId}
+          </button>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="w-full py-4 text-slate-500 uppercase tracking-[0.3em] font-technical text-[10px] hover:text-white transition-all"
+          >
+            Cancel Handshake
+          </button>
+        </div>
+
+        <div className="mt-8 text-center">
+          <div className="text-[10px] text-white/20 uppercase tracking-[0.5em] font-technical uppercase">
+            Encrypted Session: {btoa(user.uid).substring(0, 12)}...
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
