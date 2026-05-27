@@ -1,6 +1,6 @@
-import React from 'react';
-import { LogIn, Shield, ShieldCheck, Zap, Globe, Sparkles, Lock } from 'lucide-react';
-import { loginWithGoogle } from '../firebase';
+import React, { useState } from 'react';
+import { LogIn, Shield, ShieldCheck, Zap, Globe, Sparkles, Lock, Terminal } from 'lucide-react';
+import { loginWithPassword } from '../firebase';
 import { motion } from 'motion/react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -9,6 +9,20 @@ export const Landing = () => {
   const appId = searchParams.get('app_id');
   const redirectUri = searchParams.get('redirect_uri');
   const isAuthRequest = appId && redirectUri;
+
+  const [id, setId] = useState('');
+  const [key, setKey] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !key) return;
+    setIsVerifying(true);
+    // Transform ID into a pseudo-email if not provided as one
+    const email = id.includes('@') ? id : `${id}@passport.grid`;
+    await loginWithPassword(email, key);
+    setIsVerifying(false);
+  };
 
   return (
     <div className="min-h-screen bg-passport-black font-sans text-slate-100 overflow-hidden relative selection:bg-passport-gold/30 font-thin">
@@ -32,13 +46,9 @@ export const Landing = () => {
           </span>
         </div>
         <div className="flex items-center gap-6">
-          <button 
-            onClick={loginWithGoogle}
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-5 py-2 rounded-lg font-thin tracking-widest transition-all border border-passport-gold/20 hover:border-passport-gold/40 backdrop-blur-md text-[10px]"
-          >
-            <LogIn className="w-4 h-4 text-passport-gold" />
-            CONNECT_NODE
-          </button>
+          <div className="text-[9px] font-mono text-passport-gold/40 tracking-[0.3em] hidden sm:block">
+            HANDSHAKE_PENDING
+          </div>
         </div>
       </nav>
 
@@ -93,11 +103,11 @@ export const Landing = () => {
                   hidden: { opacity: 0 },
                   visible: {
                     opacity: 1,
-                    transition: { staggerChildren: 0.04, delayChildren: 2 }
+                    transition: { staggerChildren: 0.12, delayChildren: 2 }
                   }
                 }}
               >
-                {"To authenticate with this node, a secure session must be established. The StarVortex Passport ensures your Identity remain decoupled from centralized observation while maintaining total cross-sync integrity within the ecosystem.".split(" ").map((word, i) => (
+                {"To authenticate with this node, a secure session must be established. The StarVortex Passport ensures your Identity remains decoupled from centralized surveillance while maintaining total cross-sync integrity within the uncharted grid.".split(" ").map((word, i) => (
                   <motion.span key={i} variants={{ hidden: { opacity: 0, y: 5 }, visible: { opacity: 1, y: 0 } }} className="inline-block mr-1">
                     {word}
                   </motion.span>
@@ -111,11 +121,11 @@ export const Landing = () => {
                   hidden: { opacity: 0 },
                   visible: {
                     opacity: 1,
-                    transition: { staggerChildren: 0.04, delayChildren: 2 }
+                    transition: { staggerChildren: 0.12, delayChildren: 2 }
                   }
                 }}
               >
-                {"The StarVortex Passport is your encrypted key to the illegal grid. It protects your Aura from centralized surveillance while granting you access to specialized nodes. Your reputation is your only true asset. Guard it.".split(" ").map((word, i) => (
+                {"The StarVortex Passport is your encrypted key to the uncharted grid. It protects your Aura from centralized surveillance while granting you access to specialized nodes. Your reputation is your only true asset in the void. Guard it.".split(" ").map((word, i) => (
                   <motion.span key={i} variants={{ hidden: { opacity: 0, y: 5 }, visible: { opacity: 1, y: 0 } }} className="inline-block mr-1">
                     {word}
                   </motion.span>
@@ -127,15 +137,45 @@ export const Landing = () => {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6"
+            transition={{ delay: 9 }}
+            className="w-full max-w-sm mx-auto"
           >
-            <button 
-              onClick={loginWithGoogle}
-              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-passport-gold hover:bg-passport-gold-light text-passport-black font-thin py-4 px-10 rounded-xl transition-all hover:scale-[1.01] active:scale-95 shadow-[0_0_40px_rgba(165,158,132,0.1)] text-sm uppercase tracking-[0.4em]"
-            >
-              INITIALIZE_CONNECTION <LogIn className="w-5 h-5" />
-            </button>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Terminal className="w-4 h-4 text-passport-gold/40" />
+                </div>
+                <input 
+                  type="text"
+                  placeholder="GRID_IDENTIFIER"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
+                  className="w-full bg-white/5 border border-passport-gold/20 rounded-xl py-4 pl-12 pr-4 text-xs font-mono tracking-widest text-passport-gold placeholder:text-passport-gold/20 focus:outline-none focus:border-passport-gold/50 transition-all"
+                  required
+                />
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="w-4 h-4 text-passport-gold/40" />
+                </div>
+                <input 
+                  type="password"
+                  placeholder="SECURE_HANDSHAKE_KEY"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  className="w-full bg-white/5 border border-passport-gold/20 rounded-xl py-4 pl-12 pr-4 text-xs font-mono tracking-widest text-passport-gold placeholder:text-passport-gold/20 focus:outline-none focus:border-passport-gold/50 transition-all"
+                  required
+                />
+              </div>
+              <button 
+                type="submit"
+                disabled={isVerifying}
+                className="w-full flex items-center justify-center gap-3 bg-passport-gold hover:bg-passport-gold-light text-passport-black font-thin py-4 rounded-xl transition-all hover:scale-[1.01] active:scale-95 shadow-[0_0_40px_rgba(165,158,132,0.1)] text-xs uppercase tracking-[0.4em] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isVerifying ? 'VERIFYING_CREDENTIALS...' : 'ESTABLISH_PASSPORT_LINK'} 
+                {!isVerifying && <LogIn className="w-4 h-4" />}
+              </button>
+            </form>
           </motion.div>
         </motion.div>
 

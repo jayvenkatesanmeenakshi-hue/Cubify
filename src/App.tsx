@@ -51,10 +51,11 @@ export default function App() {
         getDoc(userRef).then((docSnap) => {
           if (!docSnap.exists()) {
             const friendId = Math.floor(10000000 + Math.random() * 90000000).toString();
+            const defaultName = currentUser.email ? currentUser.email.split('@')[0].toUpperCase() : 'GRID_VOYAGER';
             setDoc(userRef, {
               points: 0,
-              displayName: currentUser.displayName || 'Space Voyager',
-              photoURL: currentUser.photoURL || '',
+              displayName: currentUser.displayName || defaultName,
+              photoURL: currentUser.photoURL || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.uid}`,
               friendId: friendId,
               bio: 'Exploring the StarVortex ecosystem.',
               aura: 10,

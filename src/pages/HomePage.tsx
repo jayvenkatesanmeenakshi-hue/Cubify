@@ -116,7 +116,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
             </div>
             <div>
               <div className="text-passport-gold text-2xl font-thin tracking-[0.4em] uppercase italic">Passport</div>
-              <div className="text-passport-gold/40 text-[10px] tracking-widest uppercase">Illegal Grid Access Protocol</div>
+              <div className="text-passport-gold/40 text-[10px] tracking-widest uppercase">Uncharted Grid Access Protocol</div>
             </div>
           </div>
 
