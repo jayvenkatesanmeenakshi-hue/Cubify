@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&family=JetBrains+Mono:wght@100;200;300;400&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -6,8 +6,10 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-brand-yellow: #f59e0b;
-  --color-brand-dark: #0f172a;
+  --color-passport-black: #000000;
+  --color-passport-gold: #A59E84;
+  --color-passport-gold-light: #C4BD9D;
+  --color-passport-parchment: #F8F7F2;
 }
 
 /* Hide scrollbar globally but keep functionality */
@@ -23,9 +25,20 @@
 html, body {
   overscroll-behavior-y: none; /* Prevent bounce effect on mac/mobile */
   font-family: var(--font-sans);
+  @apply font-thin;
 }
 
 .font-technical {
   font-family: var(--font-mono);
-  letter-spacing: -0.02em;
+  @apply font-thin tracking-widest;
+}
+
+.scanlines {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.1) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
 }

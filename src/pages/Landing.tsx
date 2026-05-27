@@ -11,96 +11,153 @@ export const Landing = () => {
   const isAuthRequest = appId && redirectUri;
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 overflow-hidden relative selection:bg-indigo-500/30">
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-indigo-600/20 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] bg-purple-600/20 blur-[120px] rounded-full animate-pulse opacity-50" />
+    <div className="min-h-screen bg-passport-black font-sans text-slate-100 overflow-hidden relative selection:bg-passport-gold/30 font-thin">
+      {/* Scanline Overlay */}
+      <div className="absolute inset-0 scanlines z-50 pointer-events-none opacity-40 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]" />
+      
+      {/* Official Background Texture */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-passport-gold/5 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] bg-passport-gold-light/5 blur-[120px] rounded-full animate-pulse opacity-30" />
       </div>
 
       {/* Navigation Bar */}
-      <nav className="relative z-20 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <nav className="relative z-10 px-8 py-4 flex justify-between items-center border-b border-passport-gold/10 backdrop-blur-sm max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-600 rounded-lg shadow-[0_0_20px_rgba(79,70,229,0.5)]">
-            <Shield className="w-6 h-6 text-white" />
+          <div className="p-2 bg-passport-gold rounded-lg shadow-[0_0_20px_rgba(165,158,132,0.1)]">
+            <Shield className="w-5 h-5 text-passport-black" />
           </div>
-          <span className="text-xl font-black tracking-tighter text-white uppercase italic">
+          <span className="text-xl font-thin tracking-[0.4em] text-passport-gold uppercase italic">
             Passport
           </span>
         </div>
-        <div>
+        <div className="flex items-center gap-6">
           <button 
             onClick={loginWithGoogle}
-            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-5 py-2 rounded-lg font-medium transition-all border border-white/10 hover:border-white/20 backdrop-blur-md"
+            className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-5 py-2 rounded-lg font-thin tracking-widest transition-all border border-passport-gold/20 hover:border-passport-gold/40 backdrop-blur-md text-[10px]"
           >
-            <LogIn className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
-            Establish Origin
+            <LogIn className="w-4 h-4 text-passport-gold" />
+            CONNECT_NODE
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-20 max-w-7xl mx-auto px-8 pt-20 pb-32 flex flex-col items-center text-center">
+      <main className="relative z-10 max-w-7xl mx-auto px-8 pt-20 pb-32 flex flex-col items-center text-center">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
           className="max-w-3xl"
         >
           {isAuthRequest ? (
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-indigo-600/20 text-indigo-300 text-sm font-black mb-8 border border-indigo-500/30 uppercase tracking-[0.2em] animate-bounce">
-              <Lock className="w-4 h-4 text-indigo-400" />
-              Auth Request from {appId}
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-passport-gold/5 text-passport-gold-light text-xs font-thin mb-8 border border-passport-gold/30 uppercase tracking-[0.5em] animate-pulse"
+            >
+              <Lock className="w-4 h-4 text-passport-gold" />
+              INBOUND_HANDSHAKE: {appId}
+            </motion.div>
           ) : (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-300 text-xs font-bold mb-8 border border-indigo-500/20 uppercase tracking-[0.2em]">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 text-passport-gold-light text-[10px] font-thin mb-8 border border-passport-gold/10 uppercase tracking-[0.6em]"
+            >
               <Zap className="w-3.5 h-3.5" />
-              Ecosystem V2 Protocol Active
-            </div>
+              GRID_PROTOCOL_V2_ACTIVE
+            </motion.div>
           )}
 
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[0.85]">
-            One Identity.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 italic">
-              Infinite Access.
+          <motion.h1 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2, delay: 1 }}
+            className="text-6xl md:text-8xl font-thin tracking-tighter text-white mb-8 leading-[0.85]"
+          >
+            Access Secured.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-passport-gold to-passport-gold-light italic">
+              Aura Verified.
             </span>
-          </h1>
+          </motion.h1>
           
-          <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
-            {isAuthRequest 
-              ? `You must establish a secure session to authenticate with ${appId}. Connect your StarVortex Passport to proceed with node synchronization.`
-              : "StarVortex Passport is your high-security gateway to the neural lattice. Connect your Aura, manage your assets, and authenticate across every node in the grid."}
-          </p>
+          <div className="text-sm md:text-base text-slate-500 mb-12 max-w-2xl mx-auto font-thin leading-relaxed tracking-[0.1em]">
+            {isAuthRequest ? (
+              <motion.p
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.04, delayChildren: 2 }
+                  }
+                }}
+              >
+                {"To authenticate with this node, a secure session must be established. The StarVortex Passport ensures your Identity remain decoupled from centralized observation while maintaining total cross-sync integrity within the ecosystem.".split(" ").map((word, i) => (
+                  <motion.span key={i} variants={{ hidden: { opacity: 0, y: 5 }, visible: { opacity: 1, y: 0 } }} className="inline-block mr-1">
+                    {word}
+                  </motion.span>
+                ))}
+              </motion.p>
+            ) : (
+              <motion.p
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.04, delayChildren: 2 }
+                  }
+                }}
+              >
+                {"The StarVortex Passport is your encrypted key to the illegal grid. It protects your Aura from centralized surveillance while granting you access to specialized nodes. Your reputation is your only true asset. Guard it.".split(" ").map((word, i) => (
+                  <motion.span key={i} variants={{ hidden: { opacity: 0, y: 5 }, visible: { opacity: 1, y: 0 } }} className="inline-block mr-1">
+                    {word}
+                  </motion.span>
+                ))}
+              </motion.p>
+            )}
+          </div>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 6 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-6"
+          >
             <button 
               onClick={loginWithGoogle}
-              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 px-10 rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_40px_rgba(79,70,229,0.4)] text-lg uppercase tracking-wider"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-passport-gold hover:bg-passport-gold-light text-passport-black font-thin py-4 px-10 rounded-xl transition-all hover:scale-[1.01] active:scale-95 shadow-[0_0_40px_rgba(165,158,132,0.1)] text-sm uppercase tracking-[0.4em]"
             >
-              Initialize Passport <LogIn className="w-5 h-5" />
+              INITIALIZE_CONNECTION <LogIn className="w-5 h-5" />
             </button>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Security / Ecosystem Indicators */}
         <div className="mt-32 grid md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           <SecurityMetric 
-            icon={<ShieldCheck className="w-5 h-5 text-indigo-400" />}
+            icon={<ShieldCheck className="w-5 h-5 text-passport-gold" />}
             label="Security Rating"
             value="Class Alpha"
           />
           <SecurityMetric 
-            icon={<Globe className="w-5 h-5 text-purple-400" />}
+            icon={<Globe className="w-5 h-5 text-passport-gold" />}
             label="Node Connectivity"
             value="Active Sync"
           />
           <SecurityMetric 
-            icon={<Sparkles className="w-5 h-5 text-emerald-400" />}
+            icon={<Sparkles className="w-5 h-5 text-passport-gold" />}
             label="Aura Protocol"
             value="Initialized"
           />
           <SecurityMetric 
-            icon={<Zap className="w-5 h-5 text-orange-400" />}
+            icon={<Zap className="w-5 h-5 text-passport-gold" />}
             label="Response Latency"
             value="0.002ms"
           />
@@ -116,20 +173,20 @@ export const Landing = () => {
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mt-1 border border-indigo-500/30">
-                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <div className="w-6 h-6 rounded-full bg-passport-gold/20 flex items-center justify-center mt-1 border border-passport-gold/30">
+                    <div className="w-2 h-2 rounded-full bg-passport-gold" />
                   </div>
                   <span className="text-slate-300">Biometric and Google-backed OAuth security.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mt-1 border border-indigo-500/30">
-                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <div className="w-6 h-6 rounded-full bg-passport-gold/20 flex items-center justify-center mt-1 border border-passport-gold/30">
+                    <div className="w-2 h-2 rounded-full bg-passport-gold" />
                   </div>
                   <span className="text-slate-300">Universal 'Aura' score tracks your global reputation.</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mt-1 border border-indigo-500/30">
-                    <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <div className="w-6 h-6 rounded-full bg-passport-gold/20 flex items-center justify-center mt-1 border border-passport-gold/30">
+                    <div className="w-2 h-2 rounded-full bg-passport-gold" />
                   </div>
                   <span className="text-slate-300">Zero-friction authentication for all StarVortex nodes.</span>
                 </li>
@@ -137,25 +194,25 @@ export const Landing = () => {
             </div>
             
             <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/10 blur-[100px] rounded-full" />
+              <div className="absolute inset-0 bg-passport-gold/5 blur-[100px] rounded-full" />
               <div className="bg-white/5 border border-white/10 backdrop-blur-2xl p-8 rounded-3xl relative z-10 shadow-2xl">
                 <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-indigo-400" />
+                  <div className="w-12 h-12 rounded-xl bg-passport-black border border-passport-gold/30 flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-passport-gold" />
                   </div>
                   <div>
-                    <div className="text-xs font-black text-slate-500 uppercase tracking-widest">Protocol Check</div>
+                    <div className="text-xs font-black text-passport-gold/60 uppercase tracking-widest">Protocol Check</div>
                     <div className="text-white font-bold">Passport v2.10.4</div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center px-4 text-slate-500 font-mono text-sm tracking-widest">
+                  <div className="h-12 bg-black/60 border border-passport-gold/20 rounded-xl flex items-center px-4 text-passport-gold/40 font-mono text-sm tracking-widest">
                     AUTH_KEY: ****************
                   </div>
-                  <div className="h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center px-4 text-slate-500 font-mono text-sm tracking-widest">
+                  <div className="h-12 bg-black/60 border border-passport-gold/20 rounded-xl flex items-center px-4 text-passport-gold/40 font-mono text-sm tracking-widest">
                     SYNC_STATUS: ENCRYPTED
                   </div>
-                  <button className="w-full bg-indigo-600 py-4 rounded-xl text-white font-black uppercase tracking-wider shadow-lg">
+                  <button className="w-full bg-passport-gold py-4 rounded-xl text-passport-black font-black uppercase tracking-wider shadow-lg shadow-passport-gold/10">
                     Confirm Access
                   </button>
                 </div>
@@ -169,11 +226,11 @@ export const Landing = () => {
 };
 
 const SecurityMetric = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
-  <div className="bg-white/5 border border-white/10 backdrop-blur-md p-6 rounded-2xl flex flex-col items-center text-center group hover:bg-white/10 transition-all">
+  <div className="bg-white/5 border border-white/10 backdrop-blur-md p-6 rounded-2xl flex flex-col items-center text-center group hover:bg-white/10 transition-all font-thin">
     <div className="mb-4 p-2.5 bg-slate-900 rounded-xl border border-white/5">
       {icon}
     </div>
-    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{label}</div>
-    <div className="text-white font-bold font-mono tracking-tighter">{value}</div>
+    <div className="text-[10px] font-thin uppercase tracking-[0.4em] text-slate-500 mb-1">{label}</div>
+    <div className="text-white font-thin font-mono tracking-widest text-xs uppercase">{value}</div>
   </div>
 );

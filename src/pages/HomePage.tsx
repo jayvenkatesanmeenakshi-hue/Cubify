@@ -14,6 +14,8 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const [profile, setProfile] = useState<any>(null);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [showContent, setShowContent] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -23,6 +25,29 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const appId = searchParams.get('app_id');
   const redirectUri = searchParams.get('redirect_uri');
   const isAuthRequest = appId && redirectUri;
+
+  const loadingSequence = [
+    "CONTACTING_CENTRAL_PASSPORT_NODE...",
+    "ESTABLISHING_ENCRYPTED_HANDSHAKE...",
+    "VERIFYING_AURA_REPUTATION...",
+    "NODE_SYNC_COMPLETE. ACCESS_GRANTED."
+  ];
+
+  useEffect(() => {
+    if (profile && !showContent) {
+      const timer = setInterval(() => {
+        setLoadingStep(s => {
+          if (s >= loadingSequence.length - 1) {
+            clearInterval(timer);
+            setTimeout(() => setShowContent(true), 800);
+            return s;
+          }
+          return s + 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [profile, showContent]);
 
   useEffect(() => {
     // Listen for Profile Changes
@@ -76,59 +101,108 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
     window.location.href = callbackUrl.toString();
   };
 
-  if (!profile) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">SYNCHRONIZING PASSPORT...</div>;
+  if (!profile || !showContent) {
+    return (
+      <div className="min-h-screen bg-passport-black flex flex-col items-center justify-center p-8 font-mono relative overflow-hidden">
+        <div className="absolute inset-0 scanlines opacity-30" />
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="max-w-xl w-full"
+        >
+          <div className="flex items-center gap-4 mb-12">
+            <div className="p-3 bg-passport-gold rounded-xl">
+              <Shield className="w-8 h-8 text-passport-black" />
+            </div>
+            <div>
+              <div className="text-passport-gold text-2xl font-thin tracking-[0.4em] uppercase italic">Passport</div>
+              <div className="text-passport-gold/40 text-[10px] tracking-widest uppercase">Illegal Grid Access Protocol</div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {loadingSequence.map((text, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ 
+                  opacity: i <= loadingStep ? 1 : 0,
+                  x: i <= loadingStep ? 0 : -10 
+                }}
+                className={`flex items-center gap-3 text-xs tracking-[0.2em] ${i === loadingStep ? 'text-passport-gold' : 'text-passport-gold/40'}`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full ${i === loadingStep ? 'bg-passport-gold animate-pulse' : (i < loadingStep ? 'bg-passport-gold/20' : 'bg-transparent')}`} />
+                {text}
+              </motion.div>
+            ))}
+          </div>
+
+          {loadingStep === loadingSequence.length - 1 && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-12 text-[10px] text-passport-gold/20 tracking-widest text-center animate-pulse"
+            >
+              REDIRECTING_TO_CORE_IDENTITY_NODE...
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
   const auraPoints = (profile.points || 0) + (profile.skill || 0) + (profile.knowledge || 0) + (profile.creation || 0);
   const auraLevel = Math.floor(Math.sqrt(auraPoints / 10)) || 1;
 
   if (isAuthRequest) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-6 flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-passport-black text-slate-200 font-sans p-6 flex items-center justify-center relative overflow-hidden font-thin">
+        <div className="absolute inset-0 scanlines opacity-20 z-50 pointer-events-none" />
         {/* Ambient background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-passport-gold/5 blur-[150px] rounded-full pointer-events-none" />
         
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-2xl shadow-2xl relative z-10"
+          className="w-full max-w-lg bg-[#080808] border border-passport-gold/20 rounded-[2.5rem] p-10 backdrop-blur-2xl shadow-2xl relative z-10"
         >
           <div className="flex flex-col items-center text-center mb-10">
-            <div className="p-5 bg-indigo-600 rounded-[2rem] shadow-[0_0_40px_rgba(79,70,229,0.4)] mb-8 animate-pulse">
-              <Shield className="w-10 h-10 text-white" />
+            <div className="p-5 bg-passport-gold rounded-[2rem] shadow-[0_0_40px_rgba(165,158,132,0.1)] mb-8">
+              <Shield className="w-10 h-10 text-passport-black" />
             </div>
-            <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase mb-2">Access Request</h1>
-            <div className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] mb-6">Protocol ID: {appId}</div>
+            <h1 className="text-3xl font-thin text-white italic tracking-[0.2em] uppercase mb-2">Access Request</h1>
+            <div className="text-[10px] font-thin text-passport-gold uppercase tracking-[0.5em] mb-6">NODE_ID: {appId}</div>
             
-            <p className="text-slate-400 leading-relaxed font-medium">
-              The application <strong className="text-white">{appId}</strong> is requesting verification of your StarVortex identity. This will grant them access to your global profile and Aura level.
+            <p className="text-slate-500 leading-relaxed font-thin text-sm tracking-wider">
+              Verification of your StarVortex identity requested by <strong className="text-passport-gold font-thin">{appId}</strong>.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="bg-slate-950 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
+            <div className="bg-passport-black border border-passport-gold/10 rounded-2xl p-4 flex items-center gap-4">
               <img src={profile.photoURL} alt="" className="w-10 h-10 rounded-lg object-cover grayscale" />
               <div className="text-left">
-                <div className="text-xs font-black text-white uppercase italic">{profile.displayName}</div>
-                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Global Aura Lvl {auraLevel}</div>
+                <div className="text-xs font-thin text-white uppercase italic tracking-widest">{profile.displayName}</div>
+                <div className="text-[9px] text-passport-gold font-thin uppercase tracking-[0.3em]">Aura Rating: {auraLevel}</div>
               </div>
             </div>
 
             <button 
               onClick={handleAuthConfirm}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
+              className="w-full py-4 bg-passport-gold hover:bg-passport-gold-light text-passport-black font-thin uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95 text-xs font-mono"
             >
-              Verify Identification
+              CONFIRM_IDENTITY
             </button>
             <button 
               onClick={() => window.history.back()}
-              className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-[0.2em] rounded-2xl transition-all border border-white/5"
+              className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-500 font-thin uppercase tracking-[0.3em] rounded-2xl transition-all border border-passport-gold/10 text-xs font-mono"
             >
-              Deny Access
+              DENY_ACCESS
             </button>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-center gap-2 text-[8px] font-black text-slate-600 uppercase tracking-widest">
-            <Lock className="w-2.5 h-2.5" /> End-to-end encrypted connection
+          <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-center gap-2 text-[8px] font-thin text-slate-600 uppercase tracking-widest">
+            <Lock className="w-2.5 h-2.5" /> End-to-end encrypted grid connection
           </div>
         </motion.div>
       </div>
@@ -136,22 +210,24 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-6 pb-20">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+    <div className="min-h-screen bg-passport-black text-slate-300 font-sans p-6 pb-20 font-thin overflow-x-hidden">
+      <div className="absolute inset-0 scanlines opacity-20 pointer-events-none z-50 pointer-events-none" />
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+        {/* Header Section - Styled like an ID Page */}
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#080808] border border-passport-gold/20 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 left-0 w-full h-1 bg-passport-gold/40" />
           
           <div className="flex flex-col md:flex-row items-center gap-8 relative z-10 w-full">
             <div className="relative">
+              <div className="absolute -inset-1 bg-passport-gold/20 rounded-[2rem] blur-[4px]" />
               <img 
                 src={profile.photoURL || user.photoURL || ''} 
                 alt="Profile" 
-                className="w-32 h-32 rounded-3xl object-cover border-2 border-white/10 shadow-2xl" 
+                className="w-32 h-32 rounded-[1.8rem] object-cover border border-passport-gold/30 relative z-10 grayscale" 
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute -bottom-3 -right-3 bg-indigo-600 p-2 rounded-xl shadow-lg border border-white/20">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="absolute -bottom-3 -right-3 bg-passport-gold p-2 rounded-xl border border-passport-black z-20">
+                <Shield className="w-5 h-5 text-passport-black" />
               </div>
             </div>
 
@@ -162,47 +238,47 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                     type="text" 
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="text-3xl font-black bg-white/5 border border-white/10 rounded-xl px-4 py-2 w-full outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                    className="text-3xl font-thin bg-white/5 border border-passport-gold/20 rounded-xl px-4 py-2 w-full outline-none focus:ring-1 focus:ring-passport-gold/50 text-white tracking-tighter"
                   />
                   <textarea 
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value)}
-                    className="text-slate-400 bg-white/5 border border-white/10 rounded-xl px-4 py-2 w-full outline-none focus:ring-2 focus:ring-indigo-500 h-20 resize-none"
+                    className="text-slate-400 bg-white/5 border border-passport-gold/20 rounded-xl px-4 py-2 w-full outline-none focus:ring-1 focus:ring-passport-gold/50 h-20 resize-none font-thin tracking-wider"
                   />
                   <div className="flex gap-2 justify-center md:justify-start">
-                    <button onClick={handleSave} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold transition-all">
-                      <Save className="w-4 h-4" /> Commit Changes
+                    <button onClick={handleSave} className="flex items-center gap-2 bg-passport-gold text-passport-black px-4 py-2 rounded-lg font-thin text-[10px] tracking-widest transition-all">
+                      <Save className="w-4 h-4" /> COMMIT_CHANGES
                     </button>
-                    <button onClick={() => setIsEditing(false)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-bold transition-all">
-                      <X className="w-4 h-4" /> Cancel
+                    <button onClick={() => setIsEditing(false)} className="flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-lg font-thin text-[10px] tracking-widest transition-all">
+                      <X className="w-4 h-4" /> ABORT
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
-                    <h1 className="text-4xl font-black text-white tracking-tight uppercase italic">{profile.displayName}</h1>
-                    <button onClick={() => setIsEditing(true)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 transition-all">
+                    <h1 className="text-4xl font-thin text-white tracking-tighter uppercase italic">{profile.displayName}</h1>
+                    <button onClick={() => setIsEditing(true)} className="p-2 bg-passport-gold/5 hover:bg-passport-gold/10 rounded-lg text-passport-gold transition-all border border-passport-gold/20">
                       <Edit2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="text-slate-400 max-w-md font-medium leading-relaxed mb-4">{profile.bio || 'Exploring the StarVortex ecosystem.'}</p>
+                  <p className="text-slate-500 max-w-md font-thin leading-relaxed mb-4 tracking-wide text-sm">{profile.bio || 'Exploring the StarVortex ecosystem.'}</p>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                      ID: {profile.friendId}
+                    <div className="flex items-center gap-2 px-3 py-1 bg-passport-gold/5 border border-passport-gold/20 rounded-full text-[9px] font-thin uppercase tracking-[0.3em] text-passport-gold">
+                      PASS_ID: {profile.friendId}
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400">
-                      Rank: {(auraLevel >= 10 ? 'ELITE' : 'INITIATE')}
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-thin uppercase tracking-[0.3em] text-slate-500">
+                      CLASS: {(auraLevel >= 10 ? 'ELITE_VOYAGER' : 'INITIATE')}
                     </div>
                   </div>
                 </>
               )}
             </div>
 
-            <div className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl min-w-[200px] text-center backdrop-blur-md">
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Global Aura</div>
-              <div className="text-5xl font-black text-white italic tracking-tighter mb-1">{auraLevel}</div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{auraPoints} Net Potential</div>
+            <div className="bg-passport-black/50 p-6 rounded-[2rem] min-w-[200px] text-center border-l border-white/5">
+              <div className="text-[10px] font-thin uppercase tracking-[0.4em] text-passport-gold/40 mb-2">Global Aura</div>
+              <div className="text-5xl font-thin text-passport-gold italic tracking-tighter mb-1">{auraLevel}</div>
+              <div className="text-[9px] font-thin uppercase tracking-[0.3em] text-white/20">{auraPoints} Net Rating</div>
             </div>
           </div>
         </header>
@@ -210,26 +286,26 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Column: Ecosystem & Modules */}
           <div className="lg:col-span-4 space-y-8">
-            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
-              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
-                <Cpu className="w-5 h-5 text-indigo-500" /> Attributes
+            <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
+              <h2 className="text-base font-thin uppercase tracking-[0.4em] flex items-center gap-3 mb-8 text-white">
+                <Cpu className="w-4 h-4 text-passport-gold" /> Attributes
               </h2>
               <div className="space-y-4">
-                <AttributeBar label="Skill" value={profile.skill || 0} color="indigo" />
-                <AttributeBar label="Knowledge" value={profile.knowledge || 0} color="emerald" />
-                <AttributeBar label="Creation" value={profile.creation || 0} color="orange" />
-                <AttributeBar label="Reputation" value={profile.points || 0} color="purple" />
+                <AttributeBar label="Skill" value={profile.skill || 0} color="gold" />
+                <AttributeBar label="Knowledge" value={profile.knowledge || 0} color="black" />
+                <AttributeBar label="Creation" value={profile.creation || 0} color="gold" />
+                <AttributeBar label="Reputation" value={profile.points || 0} color="black" />
               </div>
             </section>
 
-            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
-              <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
-                <LayoutGrid className="w-5 h-5 text-purple-500" /> Achievements
+            <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
+              <h2 className="text-base font-thin uppercase tracking-[0.4em] flex items-center gap-3 mb-8 text-white">
+                <LayoutGrid className="w-4 h-4 text-passport-gold" /> Merits
               </h2>
               <div className="grid grid-cols-4 gap-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                  <div key={i} className={`aspect-square rounded-xl flex items-center justify-center border ${i <= (profile.achievements?.length || 0) + 2 ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-white/5 border-white/5 text-slate-700'}`}>
-                    <Star className="w-5 h-5" />
+                  <div key={i} className={`aspect-square rounded-2xl flex items-center justify-center border ${i <= (profile.achievements?.length || 0) + 2 ? 'bg-passport-gold/5 border-passport-gold/30 text-passport-gold' : 'bg-white/5 border-white/5 text-slate-800'}`}>
+                    <Star className="w-4 h-4" />
                   </div>
                 ))}
               </div>
@@ -238,64 +314,64 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
 
           {/* Right Column: Dynamic Feed & Integration */}
           <div className="lg:col-span-8 space-y-8">
-            <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+            <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-indigo-500" /> Linked Nodes
+                <h2 className="text-base font-thin uppercase tracking-[0.4em] flex items-center gap-3 text-white">
+                  <Globe className="w-4 h-4 text-passport-gold" /> Verified Nodes
                 </h2>
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Synchronizations</div>
+                <div className="text-[10px] font-thin text-slate-600 uppercase tracking-[0.3em]">Grid Connectivity</div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <AppLinkCard name="Passport" description="Core Identity Node" isLinked={true} color="indigo" />
-                <AppLinkCard name="GrindOS" description="Intelligence Ops" isLinked={profile.appsUsed?.includes('GrindOS')} color="blue" />
-                <AppLinkCard name="FireInk" description="Creative Node" isLinked={profile.appsUsed?.includes('FireInk')} color="orange" />
-                <AppLinkCard name="ExplainerX" description="Archive Module" isLinked={profile.appsUsed?.includes('ExplainerX')} color="emerald" />
+                <AppLinkCard name="Passport" description="Central Node" isLinked={true} color="gold" />
+                <AppLinkCard name="GrindOS" description="Intelligence Ops" isLinked={profile.appsUsed?.includes('GrindOS')} color="black" />
+                <AppLinkCard name="FireInk" description="Creative Node" isLinked={profile.appsUsed?.includes('FireInk')} color="gold" />
+                <AppLinkCard name="ExplainerX" description="Knowledge Archive" isLinked={profile.appsUsed?.includes('ExplainerX')} color="black" />
               </div>
             </section>
 
             <div className="grid md:grid-cols-2 gap-8">
-              <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
+              <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3">
-                    <Activity className="w-5 h-5 text-emerald-500" /> Security Log
+                  <h2 className="text-base font-thin uppercase tracking-[0.4em] flex items-center gap-3 text-white">
+                    <Activity className="w-4 h-4 text-passport-gold" /> Audit Log
                   </h2>
                 </div>
 
                 <div className="space-y-4">
                   {activities.length > 0 ? activities.slice(0, 5).map(activity => (
-                    <div key={activity.id} className="flex gap-4 p-3 bg-slate-900/50 rounded-xl border border-white/5">
+                    <div key={activity.id} className="flex gap-4 p-3 bg-white/5 rounded-xl border border-white/5">
                       <div className="mt-1">
-                        <Lock className="w-3 h-3 text-slate-500" />
+                        <Lock className="w-3 h-3 text-passport-gold" />
                       </div>
                       <div>
-                        <div className="text-[10px] font-bold text-slate-200">{activity.description}</div>
-                        <div className="text-[8px] font-mono text-slate-600 mt-1 uppercase">
+                        <div className="text-[10px] font-thin text-slate-300 tracking-wider transition-all">{activity.description}</div>
+                        <div className="text-[8px] font-mono text-slate-600 mt-1 uppercase tracking-widest">
                           {activity.timestamp?.toDate ? activity.timestamp.toDate().toLocaleTimeString() : '...'}
                         </div>
                       </div>
                     </div>
                   )) : (
-                    <div className="text-center py-8 text-slate-700 font-mono text-[10px] tracking-widest uppercase">STREAM IDLE</div>
+                    <div className="text-center py-8 text-slate-700 font-mono text-[9px] tracking-widest uppercase">LOGS_IDLE</div>
                   )}
                 </div>
               </section>
 
-              <section className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-xl">
-                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-3 mb-8">
-                  <Lock className="w-5 h-5 text-red-500" /> Terminal
+              <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
+                <h2 className="text-base font-thin uppercase tracking-[0.4em] flex items-center gap-3 mb-8 text-white">
+                  <Lock className="w-4 h-4 text-passport-gold" /> Session
                 </h2>
                 <div className="space-y-4">
-                  <button className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group">
-                    <Cpu className="w-4 h-4 text-indigo-400" />
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-300">Rotate Keys</span>
+                  <button className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 transition-all group">
+                    <Cpu className="w-4 h-4 text-passport-gold" />
+                    <span className="text-xs font-thin uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors">Reset Protocol</span>
                   </button>
                   <button 
                     onClick={logout}
-                    className="w-full flex items-center gap-3 p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group"
+                    className="w-full flex items-center gap-3 p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 transition-all group"
                   >
-                    <LogOut className="w-4 h-4 text-red-500" />
-                    <span className="text-xs font-black uppercase tracking-widest text-red-500">End Session</span>
+                    <LogOut className="w-4 h-4 text-slate-600" />
+                    <span className="text-xs font-thin uppercase tracking-widest text-slate-600 group-hover:text-white transition-colors">Exit Passport</span>
                   </button>
                 </div>
               </section>
@@ -309,20 +385,18 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
 
 const AttributeBar = ({ label, value, color }: { label: string, value: number, color: string }) => {
   const colors: any = {
-    indigo: 'bg-indigo-500',
-    emerald: 'bg-emerald-500',
-    orange: 'bg-orange-500',
-    purple: 'bg-purple-500'
+    gold: 'bg-passport-gold',
+    black: 'bg-passport-gold/40',
   };
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+    <div className="space-y-2 font-thin">
+      <div className="flex justify-between text-[9px] uppercase tracking-[0.2em]">
         <span className="text-slate-500">{label}</span>
         <span className="text-white">{value}</span>
       </div>
-      <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+      <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
         <div 
-          className={`h-full ${colors[color]} transition-all duration-1000`} 
+          className={`h-full ${colors[color] || 'bg-passport-gold'} transition-all duration-1000`} 
           style={{ width: `${Math.min(100, (value / 500) * 100)}%` }} 
         />
       </div>
@@ -332,41 +406,35 @@ const AttributeBar = ({ label, value, color }: { label: string, value: number, c
 
 const AppLinkCard = ({ name, description, isLinked, color }: { name: string, description: string, isLinked: boolean, color: string }) => {
   const colorClasses: Record<string, string> = {
-    indigo: 'border-indigo-500/20 group-hover:border-indigo-500/50 bg-indigo-500/5',
-    blue: 'border-blue-500/20 group-hover:border-blue-500/50 bg-blue-500/5',
-    orange: 'border-orange-500/20 group-hover:border-orange-500/50 bg-orange-500/5',
-    emerald: 'border-emerald-500/20 group-hover:border-emerald-500/50 bg-emerald-500/5',
-    purple: 'border-purple-500/20 group-hover:border-purple-500/50 bg-purple-500/5',
+    gold: 'border-passport-gold/30 bg-passport-gold/[0.03]',
+    black: 'border-white/10 bg-white/[0.02]',
   };
 
   const textClasses: Record<string, string> = {
-    indigo: 'text-indigo-400',
-    blue: 'text-blue-400',
-    orange: 'text-orange-400',
-    emerald: 'text-emerald-400',
-    purple: 'text-purple-400',
+    gold: 'text-passport-gold',
+    black: 'text-white',
   };
 
   return (
-    <div className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden bg-slate-900/30 ${isLinked ? colorClasses[color] : 'border-white/5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100'}`}>
+    <div className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden font-thin ${isLinked ? colorClasses[color] || colorClasses.gold : 'border-white/[0.02] bg-transparent grayscale opacity-20'}`}>
       <div className="flex items-start justify-between mb-4">
-        <h3 className={`text-xl font-black uppercase tracking-tighter ${isLinked ? textClasses[color] : 'text-slate-400'}`}>
+        <h3 className={`text-xl font-thin uppercase tracking-widest ${isLinked ? textClasses[color] || textClasses.gold : 'text-slate-500'}`}>
           {name}
         </h3>
         {isLinked ? (
-          <CheckCircle2 className={`w-5 h-5 ${textClasses[color]}`} />
+          <CheckCircle2 className={`w-4 h-4 ${textClasses[color] || textClasses.gold}`} />
         ) : (
-          <Lock className="w-5 h-5 text-slate-800" />
+          <Lock className="w-4 h-4 text-slate-800" />
         )}
       </div>
-      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-tight mb-6">{description}</p>
+      <p className="text-slate-500 text-[10px] uppercase tracking-wider mb-6">{description}</p>
       <div className="flex items-center justify-between">
-        <span className={`text-[9px] font-black uppercase tracking-widest ${isLinked ? textClasses[color] : 'text-slate-700'}`}>
-          {isLinked ? 'Synchronized' : 'Offline'}
+        <span className={`text-[8px] uppercase tracking-widest ${isLinked ? textClasses[color] || textClasses.gold : 'text-slate-800'}`}>
+          {isLinked ? 'LINKED' : 'OFFLINE'}
         </span>
         {isLinked && (
-          <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all">
-            <ExternalLink className="w-4 h-4 text-slate-400" />
+          <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-white/5">
+            <ExternalLink className="w-3 h-3 text-slate-500" />
           </button>
         )}
       </div>
