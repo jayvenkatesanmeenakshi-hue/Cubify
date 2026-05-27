@@ -1,31 +1,47 @@
-# StarVortex Passport Integration Guide
+# StarVortex Passport Integration Protocol 🛰️
 
-This guide is for other AI builders within the StarVortexAI ecosystem (GrindOS, ExplainerX, FireInk, Chronos) to implement the standard authentication handshake.
+This is a **mandatory specification** for all AI builders (GrindOS, Chronos, etc.) within the StarVortexAI ecosystem. 
 
-## The Handshake Protocol
+## 1. The Neural Handshake (Auth Flow)
 
-### 1. Initiation
-To authenticate a user, redirect them to the Passport hub:
-**URL:** `https://passport.starvortexai.com/passport?client_id=[AppName]&redirect_uri=[CallbackURL]`
+To authenticate a user, your application MUST redirect them to the Passport Identity Node.
 
-- `client_id`: The name of your application (e.g., `GrindOS`).
-- `redirect_uri`: The endpoint in your application that will handle the validation (e.g., `https://grindos.starvortexai.com/callback`). **Must be URL encoded.**
+**Endpoint:** `https://passport.starvortexai.com/passport`
 
-### 2. Authorization
-Passport will verify the user's neural identity. If authenticated, the user will see an authorization screen. Upon approval, Passport redirects back to your `redirect_uri`.
+### Required Query Parameters:
+- `client_id`: **CRITICAL**. Use the simple node name (e.g., `grindos`, `explainerx`, `fireink`, `chronos`). If you are the main portal, use `starvortex`. 
+- `redirect_uri`: The full callback URL in your app (e.g., `https://grindos.starvortexai.com/callback`). **MUST be URL-encoded.**
 
-### 3. Verification Callback
-Your application will receive a `GET` request at the `redirect_uri` with the following query parameters:
-- `passport_id`: The unique Passport UID of the user.
-- `auth_token`: A secure token (Base64-encoded UID) for session validation.
-
-**Example Request:**
-`https://your-app.com/callback?passport_id=UUID-123&auth_token=VVVVREFERER=`
-
-### 4. Persistence
-Sync the `passport_id` with your internal user record to ensure Rank (Novice to Master) and Titles (e.g., "Traveller") are unified across the ecosystem.
+**Correct Example Path:**
+`/passport?client_id=grindos&redirect_uri=https%3A%2F%2Fgrindos.starvortexai.com%2Fcallback`
 
 ---
 
-### Important Developer Note
-Ensure your application supports deep links (SPA fallbacks) to prevent 404s on dedicated routes. Use `_redirects` or an Express server to route all traffic to `index.html`.
+## 2. Handling the Callback
+
+Passport will redirect the user back to your `redirect_uri` with these parameters:
+- `passport_id`: The user's internal UID.
+- `auth_token`: A base64-validated neural key for this session.
+
+**You must store these in your local state/context to maintain the user's Rank and Title.**
+
+---
+
+## 3. ZERO-404 Policy 🛡️
+
+To prevent users from hitting 404 errors during redirects or deep-linking:
+1. **SPA Fallback**: Use a `_redirects` file (for static hosting) or a catch-all route (for Express/Node) that points everything back to `index.html`.
+2. **Path Consistency**: Ensure your callback route (e.g., `/callback`) is defined in your React Router configuration.
+
+---
+
+## 4. Ecosystem Node Directory
+
+| App Name | Client ID (Handshake) | Role |
+| :--- | :--- | :--- |
+| **Passport** | `passport` | Neural Identity Hub |
+| **GrindOS** | `grindos` | Task Orchestration |
+| **ExplainerX** | `explainerx` | Intelligence Node |
+| **FireInk** | `fireink` | Creative Workspace |
+| **Chronos** | `chronos` | Temporal Analysis |
+| **StarVortex** | `starvortex` | Main Ecosystem Entry |

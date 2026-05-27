@@ -6,8 +6,14 @@ import { Shield, Lock, ArrowRight, ExternalLink } from 'lucide-react';
 
 export const PassportAuth = ({ user }: { user: any }) => {
   const [searchParams] = useSearchParams();
-  const clientId = searchParams.get('client_id') || 'Unknown Alpha';
+  const rawClientId = searchParams.get('client_id') || 'Unknown Alpha';
   const redirectUri = searchParams.get('redirect_uri');
+
+  // Clean the client ID for display (strip protocol/domain if present)
+  const displayClientId = rawClientId
+    .replace(/^https?:\/\//, '')
+    .split('.')[0]
+    .toUpperCase();
 
   const handleAuthorize = () => {
     if (!user || !redirectUri) return;
@@ -87,12 +93,12 @@ export const PassportAuth = ({ user }: { user: any }) => {
               <div className="w-12 h-12 rounded-full bg-passport-gold/10 border border-passport-gold/20 flex items-center justify-center mb-2">
                 <ExternalLink className="w-5 h-5 text-passport-gold" />
               </div>
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest">{clientId}</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest">{displayClientId}</span>
             </div>
           </div>
           
           <p className="text-slate-300 text-xs leading-relaxed text-center mb-0">
-            Node <span className="text-passport-gold italic uppercase">{clientId}</span> is requesting access to your Neural Identity.
+            Node <span className="text-passport-gold italic uppercase">{displayClientId}</span> is requesting access to your Neural Identity.
           </p>
         </div>
 
@@ -116,7 +122,7 @@ export const PassportAuth = ({ user }: { user: any }) => {
             onClick={handleAuthorize}
             className="w-full py-5 bg-passport-gold text-passport-black uppercase tracking-[0.4em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(165,158,132,0.2)]"
           >
-            Login to {clientId}
+            Login to {displayClientId}
           </button>
           <button 
             onClick={() => window.location.href = '/'}

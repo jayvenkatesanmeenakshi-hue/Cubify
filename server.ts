@@ -21,6 +21,11 @@ async function startServer() {
     
     // Explicit SPA fallback for development to handle deep links correctly
     app.use('*', async (req, res, next) => {
+      // Skip if it looks like a file (has an extension)
+      if (req.originalUrl.includes('.')) {
+        return next();
+      }
+
       const url = req.originalUrl;
       try {
         let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
