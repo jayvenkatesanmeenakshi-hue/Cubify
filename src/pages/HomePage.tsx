@@ -357,19 +357,11 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                   onClick={setSelectedApp}
                 />
                 <AppLinkCard 
-                  name="AuraSync" 
-                  description="Reputation Engine" 
-                  isLinked={profile.appsUsed?.includes('AuraSync')} 
+                  name="ExplainerX" 
+                  description="Intelligence Node" 
+                  isLinked={profile.appsUsed?.includes('ExplainerX')} 
                   color="gold"
-                  stats={{ uptime: '97.1%', health: 'Optimal', sessions: 14 }}
-                  onClick={setSelectedApp}
-                />
-                <AppLinkCard 
-                  name="Zenith" 
-                  description="Elite Protocol" 
-                  isLinked={profile.appsUsed?.includes('Zenith')} 
-                  color="black"
-                  stats={{ uptime: '88.9%', health: 'Intermittent', sessions: 2 }}
+                  stats={{ uptime: '97.4%', health: 'Optimal', sessions: 19 }}
                   onClick={setSelectedApp}
                 />
               </div>
