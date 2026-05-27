@@ -16,6 +16,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const [showContent, setShowContent] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -323,10 +324,54 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <AppLinkCard name="Passport" description="Central Node" isLinked={true} color="gold" />
-                <AppLinkCard name="GrindOS" description="Intelligence Ops" isLinked={profile.appsUsed?.includes('GrindOS')} color="black" />
-                <AppLinkCard name="FireInk" description="Creative Node" isLinked={profile.appsUsed?.includes('FireInk')} color="gold" />
-                <AppLinkCard name="ExplainerX" description="Knowledge Archive" isLinked={profile.appsUsed?.includes('ExplainerX')} color="black" />
+                <AppLinkCard 
+                  name="Passport" 
+                  description="Central Identity Node" 
+                  isLinked={true} 
+                  color="gold"
+                  stats={{ uptime: '99.99%', health: 'Optimal', sessions: 12 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="GrindOS" 
+                  description="Intelligence Ops" 
+                  isLinked={profile.appsUsed?.includes('GrindOS')} 
+                  color="black"
+                  stats={{ uptime: '94.2%', health: 'Degraded', sessions: 5 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="FireInk" 
+                  description="Creative Node" 
+                  isLinked={profile.appsUsed?.includes('FireInk')} 
+                  color="gold"
+                  stats={{ uptime: '98.5%', health: 'Optimal', sessions: 8 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="Chronos" 
+                  description="Knowledge Archive" 
+                  isLinked={profile.appsUsed?.includes('Chronos')} 
+                  color="black"
+                  stats={{ uptime: '100%', health: 'Optimal', sessions: 3 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="AuraSync" 
+                  description="Reputation Engine" 
+                  isLinked={profile.appsUsed?.includes('AuraSync')} 
+                  color="gold"
+                  stats={{ uptime: '97.1%', health: 'Optimal', sessions: 14 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="Zenith" 
+                  description="Elite Protocol" 
+                  isLinked={profile.appsUsed?.includes('Zenith')} 
+                  color="black"
+                  stats={{ uptime: '88.9%', health: 'Intermittent', sessions: 2 }}
+                  onClick={setSelectedApp}
+                />
               </div>
             </section>
 
@@ -379,6 +424,85 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedApp && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedApp(null)}
+              className="absolute inset-0 bg-passport-black/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-[#080808] border border-passport-gold/30 rounded-[2.5rem] p-10 max-w-lg w-full relative z-[110] shadow-2xl font-thin"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-passport-gold rounded-2xl">
+                    <Shield className="w-6 h-6 text-passport-black" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl text-white uppercase italic tracking-tighter">{selectedApp.name}</h2>
+                    <div className="text-[10px] text-passport-gold uppercase tracking-[0.4em]">{selectedApp.description}</div>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedApp(null)} className="p-2 hover:bg-white/5 rounded-full text-slate-500">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mb-1">NODE_UPTIME</div>
+                  <div className="text-xl text-passport-gold font-technical">{selectedApp.stats?.uptime || '0.00%'}</div>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mb-1">HEALTH_STATUS</div>
+                  <div className="text-xl text-white font-technical">{selectedApp.stats?.health || 'OFFLINE'}</div>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mb-1">SYNC_SESSIONS</div>
+                  <div className="text-xl text-white font-technical">{selectedApp.stats?.sessions || 0}</div>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] mb-1">LATENCY_MS</div>
+                  <div className="text-xl text-white font-technical">~24ms</div>
+                </div>
+              </div>
+
+              <div className="bg-passport-gold/5 border border-passport-gold/20 p-6 rounded-2xl mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <Activity className="w-4 h-4 text-passport-gold" />
+                  <span className="text-[10px] text-passport-gold uppercase tracking-widest">Real-time Telemetry</span>
+                </div>
+                <div className="h-24 flex items-end gap-1 px-2">
+                  {[40, 70, 45, 90, 65, 80, 50, 40, 60, 85, 30, 50, 70, 60, 40].map((h, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{ delay: i * 0.05, repeat: Infinity, repeatType: 'reverse', duration: 1.5 }}
+                      className="flex-1 bg-passport-gold/20 rounded-t-sm"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setSelectedApp(null)}
+                className="w-full py-4 bg-passport-gold text-passport-black uppercase tracking-[0.3em] font-technical text-xs rounded-2xl hover:bg-passport-gold-light transition-all"
+              >
+                DISMISS_INTELLIGENCE
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -404,10 +528,10 @@ const AttributeBar = ({ label, value, color }: { label: string, value: number, c
   );
 };
 
-const AppLinkCard = ({ name, description, isLinked, color }: { name: string, description: string, isLinked: boolean, color: string }) => {
+const AppLinkCard = ({ name, description, isLinked, color, stats, onClick }: { name: string, description: string, isLinked: boolean, color: string, stats?: any, onClick?: (app: any) => void }) => {
   const colorClasses: Record<string, string> = {
-    gold: 'border-passport-gold/30 bg-passport-gold/[0.03]',
-    black: 'border-white/10 bg-white/[0.02]',
+    gold: 'border-passport-gold/30 bg-passport-gold/[0.03] hover:bg-passport-gold/[0.06]',
+    black: 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]',
   };
 
   const textClasses: Record<string, string> = {
@@ -416,7 +540,10 @@ const AppLinkCard = ({ name, description, isLinked, color }: { name: string, des
   };
 
   return (
-    <div className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden font-thin ${isLinked ? colorClasses[color] || colorClasses.gold : 'border-white/[0.02] bg-transparent grayscale opacity-20'}`}>
+    <div 
+      onClick={() => isLinked && onClick && onClick({ name, description, stats })}
+      className={`group p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden font-thin ${isLinked ? colorClasses[color] || colorClasses.gold : 'border-white/[0.02] bg-transparent grayscale opacity-20 cursor-not-allowed'} ${isLinked ? 'cursor-pointer' : ''}`}
+    >
       <div className="flex items-start justify-between mb-4">
         <h3 className={`text-xl font-thin uppercase tracking-widest ${isLinked ? textClasses[color] || textClasses.gold : 'text-slate-500'}`}>
           {name}
@@ -433,9 +560,9 @@ const AppLinkCard = ({ name, description, isLinked, color }: { name: string, des
           {isLinked ? 'LINKED' : 'OFFLINE'}
         </span>
         {isLinked && (
-          <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-white/5">
-            <ExternalLink className="w-3 h-3 text-slate-500" />
-          </button>
+          <div className="p-2 bg-white/5 group-hover:bg-passport-gold group-hover:text-passport-black rounded-lg transition-all border border-white/5">
+            <Info className="w-3 h-3" />
+          </div>
         )}
       </div>
     </div>
