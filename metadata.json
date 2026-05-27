@@ -1,6 +1,6 @@
 {
   "name": "StarVortex Passport",
-  "description": "The centralized identity and authentication hub for the StarVortex Ecosystem. Manage your global profile, security, and Aura.",
+  "description": "The neural gateway for the entire StarVortexAI ecosystem. Centralized authentication, user ranks, and cross-platform achievements hub.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
