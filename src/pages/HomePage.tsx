@@ -155,6 +155,18 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   const auraPoints = (profile.points || 0) + (profile.skill || 0) + (profile.knowledge || 0) + (profile.creation || 0);
   const auraLevel = Math.floor(Math.sqrt(auraPoints / 10)) || 1;
 
+  // Rank mapping based on aura level
+  const getRank = (level: number) => {
+    if (level < 5) return 'Novice';
+    if (level < 10) return 'Explorer';
+    if (level < 15) return 'Voyager';
+    if (level < 20) return 'Veteran';
+    return 'Master';
+  };
+
+  const userRank = getRank(auraLevel);
+  const userTitle = profile.title || 'Traveller';
+
   if (isAuthRequest) {
     return (
       <div className="min-h-screen bg-passport-black text-slate-200 font-sans p-6 flex items-center justify-center relative overflow-hidden font-thin">
@@ -184,7 +196,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
               <img src={profile.photoURL} alt="" className="w-10 h-10 rounded-lg object-cover grayscale" />
               <div className="text-left">
                 <div className="text-xs font-thin text-white uppercase italic tracking-widest">{profile.displayName}</div>
-                <div className="text-[9px] text-passport-gold font-thin uppercase tracking-[0.3em]">Aura Rating: {auraLevel}</div>
+                <div className="text-[9px] text-passport-gold font-thin uppercase tracking-[0.3em]">RANK: {userRank} | TITLE: {userTitle}</div>
               </div>
             </div>
 
@@ -269,7 +281,10 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                       PASS_ID: {profile.friendId}
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-thin uppercase tracking-[0.3em] text-slate-500">
-                      CLASS: {(auraLevel >= 10 ? 'ELITE_VOYAGER' : 'INITIATE')}
+                      RANK: {userRank}
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-thin uppercase tracking-[0.3em] text-slate-400 italic">
+                      TITLE: {userTitle}
                     </div>
                   </div>
                 </>
@@ -326,7 +341,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
               <div className="grid md:grid-cols-2 gap-4">
                 <AppLinkCard 
                   name="Passport" 
-                  description="Central Identity Node" 
+                  description="The neural gateway for user identity, global Rank, and Titles." 
                   isLinked={true} 
                   color="gold"
                   stats={{ uptime: '99.99%', health: 'Optimal', sessions: 12 }}
@@ -334,38 +349,39 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                 />
                 <AppLinkCard 
                   name="GrindOS" 
-                  description="Intelligence Ops" 
+                  description="Task-orchestration engine for the daily grind." 
                   isLinked={profile.appsUsed?.includes('GrindOS')} 
                   color="black"
                   stats={{ uptime: '94.2%', health: 'Degraded', sessions: 5 }}
                   onClick={setSelectedApp}
                 />
                 <AppLinkCard 
-                  name="FireInk" 
-                  description="Creative Node" 
-                  isLinked={profile.appsUsed?.includes('FireInk')} 
-                  color="gold"
-                  stats={{ uptime: '98.5%', health: 'Optimal', sessions: 8 }}
-                  onClick={setSelectedApp}
-                />
-                <AppLinkCard 
-                  name="Chronos" 
-                  description="Knowledge Archive" 
-                  isLinked={profile.appsUsed?.includes('Chronos')} 
-                  color="black"
-                  stats={{ uptime: '100%', health: 'Optimal', sessions: 3 }}
-                  onClick={setSelectedApp}
-                />
-                <AppLinkCard 
                   name="ExplainerX" 
-                  description="Intelligence Node" 
+                  description="Advanced multi-modal AI for simplifying complex topics." 
                   isLinked={profile.appsUsed?.includes('ExplainerX')} 
                   color="gold"
                   stats={{ uptime: '97.4%', health: 'Optimal', sessions: 19 }}
                   onClick={setSelectedApp}
                 />
+                <AppLinkCard 
+                  name="FireInk" 
+                  description="Creative workspace and AI collaborator for authors." 
+                  isLinked={profile.appsUsed?.includes('FireInk')} 
+                  color="black"
+                  stats={{ uptime: '98.5%', health: 'Optimal', sessions: 8 }}
+                  onClick={setSelectedApp}
+                />
+                <AppLinkCard 
+                  name="Chronos" 
+                  description="Educational tool for historical temporal analysis." 
+                  isLinked={profile.appsUsed?.includes('Chronos')} 
+                  color="gold"
+                  stats={{ uptime: '100%', health: 'Optimal', sessions: 3 }}
+                  onClick={setSelectedApp}
+                />
               </div>
             </section>
+
 
             <div className="grid md:grid-cols-2 gap-8">
               <section className="bg-[#080808] border border-white/10 p-8 rounded-[2rem] shadow-xl">
