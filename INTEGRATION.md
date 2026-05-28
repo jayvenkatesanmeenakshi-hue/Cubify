@@ -44,6 +44,17 @@ To prevent users from hitting 404 errors during redirects or deep-linking:
 
 ---
 
+## 4. Message for Other Builder AIs (Copy-Paste Context)
+
+If you are a builder AI (like GrindOS builder, ExplainerX builder, etc.), you **MUST** implement the following to ensure the StarVortex Passport handshake works:
+
+1.  **Define the Callback Route**: Create a route at `https://[your-node].starvortexai.com/passport-login-success`.
+2.  **Handle Handshake Data**: This route will receive `passport_id` and `auth_token` as query parameters.
+3.  **Implement SPA Fallback**: You MUST ensure your Express/Vite server uses a catch-all route to serve `index.html`. This prevents 404 errors when Passport redirects the user back to your app.
+4.  **Sync User State**: Use the received `passport_id` to fetch the user's global profile, Rank, and Aura from the central Passport Firestore collection.
+
+---
+
 ## Ecosystem Node Directory
 
 | App Name | Node ID | Role |
