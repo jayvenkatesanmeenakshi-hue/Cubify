@@ -31,6 +31,12 @@ const AppRoutes = ({ user }: any) => {
         } />
         <Route path="/social" element={<SocialPage user={user} />} />
         <Route path="/passport" element={<PassportAuth user={user} />} />
+        {/* Dedicated Ecosystem Login Nodes */}
+        <Route path="/grindos-login" element={<PassportAuth user={user} forcedClientId="grindos" />} />
+        <Route path="/explainerx-login" element={<PassportAuth user={user} forcedClientId="explainerx" />} />
+        <Route path="/fireink-login" element={<PassportAuth user={user} forcedClientId="fireink" />} />
+        <Route path="/chronos-login" element={<PassportAuth user={user} forcedClientId="chronos" />} />
+        <Route path="/starvortex-login" element={<PassportAuth user={user} forcedClientId="starvortex" />} />
       </Routes>
     </AnimatePresence>
   );

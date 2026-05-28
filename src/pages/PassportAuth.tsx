@@ -4,10 +4,10 @@ import { auth } from '../firebase';
 import { motion } from 'motion/react';
 import { Shield, Lock, ArrowRight, ExternalLink } from 'lucide-react';
 
-export const PassportAuth = ({ user }: { user: any }) => {
+export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClientId?: string }) => {
   const [searchParams] = useSearchParams();
-  const rawClientId = searchParams.get('client_id') || 'Unknown Alpha';
-  const redirectUri = searchParams.get('redirect_uri');
+  const rawClientId = forcedClientId || searchParams.get('client_id') || 'Unknown Alpha';
+  const redirectUri = searchParams.get('redirect_uri') || (rawClientId !== 'Unknown Alpha' ? `https://${rawClientId.toLowerCase()}.starvortexai.com/passport-login-success` : null);
 
   // Clean the client ID for display (strip protocol/domain if present)
   const displayClientId = rawClientId
