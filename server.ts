@@ -20,12 +20,13 @@ async function startServer() {
     app.use(vite.middlewares);
     
     // Explicit SPA fallback for development to handle deep links correctly
-    app.use('*', async (req, res, next) => {
-      // Skip if it looks like a file (has an extension)
-      if (req.originalUrl.includes('.')) {
+    app.get('*', async (req, res, next) => {
+      // Skip if it looks like a file (has an extension) or if it's an API route
+      if (req.originalUrl.includes('.') || req.originalUrl.startsWith('/api')) {
         return next();
       }
 
+      console.log(`[DEV] SPA Fallback mapping: ${req.originalUrl}`);
       const url = req.originalUrl;
       try {
         let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
@@ -39,10 +40,13 @@ async function startServer() {
   } else {
     // In production, serve the dist folder
     const distPath = path.resolve(process.cwd(), 'dist');
+    
+    // Static files first
     app.use(express.static(distPath, { index: false }));
     
     // SPA fallback: handle all routes by serving index.html
     app.get('*', (req, res) => {
+      console.log(`[PROD] SPA Fallback mapping: ${req.originalUrl}`);
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   }

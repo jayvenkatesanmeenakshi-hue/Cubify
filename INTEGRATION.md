@@ -20,24 +20,27 @@ Rather than constructing complex query parameters, other apps SHOULD redirect us
 
 ## 2. Standard Callback Protocol (Mandatory)
 
-All apps in the ecosystem MUST implement the following callback route to receive the handshake data:
+All apps in the ecosystem MUST implement the following callback route to receive the handshake data. **Failure to implement this exact route will result in a 404 message on your domain after the user clicks "Authorize".**
 
-**Route:** `/[your-app-domain].starvortexai.com/passport-login-success`
+**Mandatory Route:** `https://[your-node].starvortexai.com/passport-login-success`
 
 ### Handshake Payload (Query Params):
 - `passport_id`: The user's internal UID.
 - `auth_token`: A base64-validated key for the session.
 
-**Example Received URL:**
-`https://grindos.starvortexai.com/passport-login-success?passport_id=UUID-123&auth_token=VVVVREFERER=`
+**Developer Implementation (React Router Example):**
+```tsx
+<Route path="/passport-login-success" element={<PassportCallbackHandler />} />
+```
 
 ---
 
-## 3. Deployment Checklist for Builders 🛡️
+## 3. ZERO-404 Policy 🛡️
 
-1. **SPA Fallback**: Ensure your app (GrindOS, etc.) routes all traffic to `index.html`. 404s on `/passport-login-success` are usually caused by missing SPA routing config.
-2. **Path Definition**: Define `/passport-login-success` in your React/Vue/Svelte router.
-3. **Session Persistence**: Once you receive the `passport_id`, synchronize it with your local state to preserve the user's Rank (Novice to Master) and Aura values across nodes.
+To prevent users from hitting 404 errors during redirects or deep-linking:
+1. **Your App**: You MUST configure an SPA fallback (catch-all route) that points to `index.html`. 
+2. **Passport App**: Support for `/grindos-login`, `/fireink-login`, etc., is already active on the Passport node.
+3. **Synchronization**: Once you receive the `passport_id`, synchronize it with your local state to preserve the user's Rank and Aura across the ecosystem.
 
 ---
 
