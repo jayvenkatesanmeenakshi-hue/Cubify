@@ -16,12 +16,16 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
     .toUpperCase();
 
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleAuthorize = async () => {
     if (!user || !redirectUri || loading) return;
     setLoading(true);
+    setError(null);
 
     try {
+      console.log('Initiating handshake for:', rawClientId);
+      
       // Fetch a real Firebase custom token from our server
       const response = await fetch('/api/auth/custom-token', {
         method: 'POST',
@@ -29,25 +33,36 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
         body: JSON.stringify({ uid: user.uid }),
       });
 
-      if (!response.ok) throw new Error('Handshake negotiation failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Handshake negotiation failed');
+      }
       
       const { customToken } = await response.json();
+      
+      if (!customToken) throw new Error('No token received from nebula');
       
       const url = new URL(redirectUri);
       url.searchParams.append('passport_id', user.uid);
       url.searchParams.append('auth_token', customToken);
 
+      console.log('Handshake successful, redirecting to:', url.origin);
+      
       // Perform redirect
       window.location.href = url.toString();
-    } catch (error) {
-      console.error('Handshake failed:', error);
+    } catch (err: any) {
+      console.error('Handshake failed:', err);
+      setError(err.message || 'Unknown protocol error');
       setLoading(false);
     }
   };
 
   if (!user) {
-    // If user isn't logged in, they should be seeing the landing page logic
-    // but here we can just show a prompt to login first
+    // If user isn't logged in, redirect to landing with the right parameters to preserve context
+    const landingUrl = new URL(window.location.origin);
+    landingUrl.searchParams.set('app_id', rawClientId);
+    if (redirectUri) landingUrl.searchParams.set('redirect_uri', redirectUri);
+    
     return (
       <div className="min-h-screen bg-passport-black flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0c0c0c] to-black">
         <motion.div 
@@ -60,15 +75,15 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
               <Lock className="w-8 h-8 text-passport-gold" />
             </div>
           </div>
-          <h2 className="text-2xl text-white uppercase italic tracking-tighter mb-2">Neural Link Required</h2>
+          <h2 className="text-2xl text-white uppercase italic tracking-tighter mb-2">Identity Verification</h2>
           <p className="text-slate-500 font-thin text-xs leading-relaxed uppercase tracking-widest mb-8">
-            Identity verification is pending. Please return to the Gateway to authenticate.
+            Please authenticate your Passport to continue to <span className="text-passport-gold">{displayClientId}</span>.
           </p>
           <button 
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = landingUrl.toString()}
             className="w-full py-4 bg-passport-gold text-passport-black uppercase tracking-[0.3em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all"
           >
-            RETURN_TO_GATEWAY
+            SECURE_LOGIN_REQUIRED
           </button>
         </motion.div>
       </div>
@@ -133,6 +148,11 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
         </div>
 
         <div className="flex flex-col gap-4">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] uppercase tracking-widest text-center">
+              Protocol Error: {error}
+            </div>
+          )}
           <button 
             onClick={handleAuthorize}
             disabled={loading}

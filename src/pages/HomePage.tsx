@@ -81,25 +81,40 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
     setIsEditing(false);
   };
 
-  const handleAuthConfirm = async () => {
-    if (!appId || !redirectUri) return;
+  const handleAuthConfirm = async (customClientId?: string, customRedirect?: string) => {
+    const finalClientId = customClientId || appId;
+    const finalRedirect = customRedirect || redirectUri;
+    
+    if (!finalClientId || !finalRedirect) return;
 
     // Log the auth event
-    await broadcastActivity(user.uid, `Authorized ${appId} for secure data access.`, {
+    await broadcastActivity(user.uid, `Authorized ${finalClientId} for secure data access.`, {
       app: 'Passport',
       type: 'auth_grant',
-      target_app: appId
+      target_app: finalClientId
     });
 
-    // Generate a simulated secure token
-    const secureToken = btoa(`${user.uid}:${Date.now()}:${Math.random()}`).substring(0, 32);
-    
-    // Redirect with the token and ID
-    const callbackUrl = new URL(redirectUri);
-    callbackUrl.searchParams.set('passport_id', user.uid);
-    callbackUrl.searchParams.set('auth_token', secureToken);
-    
-    window.location.href = callbackUrl.toString();
+    try {
+      // Fetch real custom token
+      const response = await fetch('/api/auth/custom-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: user.uid }),
+      });
+
+      if (!response.ok) throw new Error('Nebula connection failed');
+      const { customToken } = await response.json();
+      
+      // Redirect with the token and ID
+      const callbackUrl = new URL(finalRedirect);
+      callbackUrl.searchParams.set('passport_id', user.uid);
+      callbackUrl.searchParams.set('auth_token', customToken);
+      
+      window.location.href = callbackUrl.toString();
+    } catch (err) {
+      console.error('Handshake failed:', err);
+      alert('Handshake protocol failed. Check console.');
+    }
   };
 
   if (!profile || !showContent) {
@@ -501,12 +516,23 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
                 </div>
               </div>
 
-              <button 
-                onClick={() => setSelectedApp(null)}
-                className="w-full py-4 bg-passport-gold text-passport-black uppercase tracking-[0.3em] font-technical text-xs rounded-2xl hover:bg-passport-gold-light transition-all"
-              >
-                DISMISS_INTELLIGENCE
-              </button>
+              <div className="flex flex-col gap-4">
+                <button 
+                  onClick={() => {
+                    const nodeUrl = `https://${selectedApp.name.toLowerCase()}.starvortexai.com/passport-login-success`;
+                    handleAuthConfirm(selectedApp.name.toLowerCase(), nodeUrl);
+                  }}
+                  className="w-full py-5 bg-passport-gold text-passport-black uppercase tracking-[0.4em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(165,158,132,0.2)]"
+                >
+                  Confirm Handshake with {selectedApp.name}
+                </button>
+                <button 
+                  onClick={() => setSelectedApp(null)}
+                  className="w-full py-4 bg-white/5 text-slate-500 uppercase tracking-[0.3em] font-technical text-[10px] rounded-2xl hover:text-white transition-all underline underline-offset-8"
+                >
+                  DISMISS_INTELLIGENCE
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
