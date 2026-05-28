@@ -15,19 +15,34 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
     .split('.')[0]
     .toUpperCase();
 
-  const handleAuthorize = () => {
-    if (!user || !redirectUri) return;
+  const [loading, setLoading] = React.useState(false);
 
-    // Generate auth token (base64 encoded UID)
-    const authToken = btoa(user.uid);
-    const passportId = user.uid;
+  const handleAuthorize = async () => {
+    if (!user || !redirectUri || loading) return;
+    setLoading(true);
 
-    const url = new URL(redirectUri);
-    url.searchParams.append('passport_id', passportId);
-    url.searchParams.append('auth_token', authToken);
+    try {
+      // Fetch a real Firebase custom token from our server
+      const response = await fetch('/api/auth/custom-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: user.uid }),
+      });
 
-    // Perform redirect
-    window.location.href = url.toString();
+      if (!response.ok) throw new Error('Handshake negotiation failed');
+      
+      const { customToken } = await response.json();
+      
+      const url = new URL(redirectUri);
+      url.searchParams.append('passport_id', user.uid);
+      url.searchParams.append('auth_token', customToken);
+
+      // Perform redirect
+      window.location.href = url.toString();
+    } catch (error) {
+      console.error('Handshake failed:', error);
+      setLoading(false);
+    }
   };
 
   if (!user) {
@@ -120,9 +135,10 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
         <div className="flex flex-col gap-4">
           <button 
             onClick={handleAuthorize}
-            className="w-full py-5 bg-passport-gold text-passport-black uppercase tracking-[0.4em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(165,158,132,0.2)]"
+            disabled={loading}
+            className="w-full py-5 bg-passport-gold text-passport-black uppercase tracking-[0.4em] font-technical text-xs rounded-2xl hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(165,158,132,0.2)] disabled:opacity-50 disabled:cursor-wait"
           >
-            Login to {displayClientId}
+            {loading ? 'NEGOTIATING_HANDSHAKE...' : `Login to ${displayClientId}`}
           </button>
           <button 
             onClick={() => window.location.href = '/'}

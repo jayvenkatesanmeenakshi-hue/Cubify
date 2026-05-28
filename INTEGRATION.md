@@ -26,11 +26,22 @@ All apps in the ecosystem MUST implement the following callback route to receive
 
 ### Handshake Payload (Query Params):
 - `passport_id`: The user's internal UID.
-- `auth_token`: A base64-validated key for the session.
+- `auth_token`: A **Firebase Custom Auth Token**. Use `signInWithCustomToken(auth, authToken)` to synchronize the session.
 
-**Developer Implementation (React Router Example):**
+**Developer Implementation (Firebase SDK):**
 ```tsx
-<Route path="/passport-login-success" element={<PassportCallbackHandler />} />
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
+
+const handleHandshake = async (passportId: string, authToken: string) => {
+  const auth = getAuth();
+  try {
+    // Authenticate the user with the ecosystem-wide custom token
+    const result = await signInWithCustomToken(auth, authToken);
+    console.log('Synchronized with Passport as:', result.user.uid);
+  } catch (err) {
+    console.error('Handshake failed:', err);
+  }
+};
 ```
 
 ---
@@ -52,10 +63,11 @@ To prevent users from hitting 404 errors during redirects or deep-linking:
 > 
 > My task is to implement the Passport Handshake. Please do the following:
 > 1. Create a dedicated route at `/passport-login-success`.
-> 2. This route will receive `passport_id` (the user's UID) and `auth_token` as query parameters.
-> 3. Store these in our app's global state to maintain the user's cross-platform session.
-> 4. CRITICAL: Update our server configuration (e.g., `vercel.json` or `server.ts`) to enable SPA Fallback (catch-all routes) so that navigating back from Passport directly to `/passport-login-success` does not trigger a 404.
-> 5. To initiate login, redirect the user to: `https://passport.starvortexai.com/[your-node-name]-login`."
+> 2. This route will receive `passport_id` (the user's UID) and `auth_token` (a Firebase Custom Token).
+> 3. Use `signInWithCustomToken(auth, auth_token)` from the Firebase SDK to authenticate the user securely using this token.
+> 4. Store the state globally to maintain the user's Rank and Aura.
+> 5. CRITICAL: Update our server configuration (e.g., `vercel.json` or `server.ts`) to enable SPA Fallback (catch-all routes) so that navigating back from Passport directly to `/passport-login-success` does not trigger a 404.
+> 6. To initiate login, redirect the user to: `https://passport.starvortexai.com/[your-node-name]-login`."
 
 ---
 

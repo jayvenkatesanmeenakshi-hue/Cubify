@@ -11,6 +11,33 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // API routes FIRST
+  app.use(express.json());
+
+  app.post("/api/auth/custom-token", async (req, res) => {
+    const { uid } = req.body;
+    if (!uid) {
+      return res.status(400).json({ error: "UID is required" });
+    }
+
+    try {
+      const { default: admin } = await import("firebase-admin");
+      
+      // Initialize admin if not already initialized
+      if (admin.apps.length === 0) {
+        admin.initializeApp({
+          projectId: "gen-lang-client-0653546461",
+        });
+      }
+
+      const customToken = await admin.auth().createCustomToken(uid);
+      res.json({ customToken });
+    } catch (error) {
+      console.error("Error generating custom token:", error);
+      res.status(500).json({ error: "Failed to generate custom token" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
