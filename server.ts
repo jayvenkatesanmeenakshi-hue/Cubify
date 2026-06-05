@@ -3,9 +3,17 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import admin from "firebase-admin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Firebase Admin once at startup
+if (admin.apps.length === 0) {
+  admin.initializeApp({
+    projectId: "gen-lang-client-0653546461",
+  });
+}
 
 async function startServer() {
   const app = express();
@@ -15,26 +23,32 @@ async function startServer() {
   app.use(express.json());
 
   app.post("/api/auth/custom-token", async (req, res) => {
-    const { uid } = req.body;
-    if (!uid) {
-      return res.status(400).json({ error: "UID is required" });
-    }
-
     try {
-      const { default: admin } = await import("firebase-admin");
+      const { uid } = req.body;
+      console.log(`[AUTH] Handshake request received for UID: ${uid}`);
       
-      // Initialize admin if not already initialized
+      if (!uid) {
+        return res.status(400).json({ error: "Identity (UID) is required for handshake" });
+      }
+
+      // Ensure admin is initialized
       if (admin.apps.length === 0) {
+        console.log("[AUTH] Lazy-initializing Firebase Admin...");
         admin.initializeApp({
           projectId: "gen-lang-client-0653546461",
         });
       }
 
       const customToken = await admin.auth().createCustomToken(uid);
-      res.json({ customToken });
-    } catch (error) {
-      console.error("Error generating custom token:", error);
-      res.status(500).json({ error: "Failed to generate custom token" });
+      console.log(`[AUTH] Handshake generated successfully for ${uid}`);
+      
+      return res.status(200).json({ customToken });
+    } catch (error: any) {
+      console.error("[AUTH] Handshake protocol failure:", error);
+      return res.status(500).json({ 
+        error: "Handshake negotiation failed",
+        details: error.message 
+      });
     }
   });
 

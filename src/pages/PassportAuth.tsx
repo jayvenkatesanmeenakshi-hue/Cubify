@@ -29,18 +29,30 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
       // Fetch a real Firebase custom token from our server
       const response = await fetch('/api/auth/custom-token', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ uid: user.uid }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Handshake negotiation failed');
+      const responseText = await response.text();
+      let data: any;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error("Nebula protocol corruption (not JSON):", responseText);
+        throw new Error(`Protocol corruption: ${response.status} ${response.statusText}`);
       }
       
-      const { customToken } = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || `Handshake negotiation failed (${response.status})`);
+      }
       
-      if (!customToken) throw new Error('No token received from nebula');
+      const { customToken } = data;
+      
+      if (!customToken) throw new Error('No identity token received from nebula');
       
       const url = new URL(redirectUri);
       url.searchParams.append('passport_id', user.uid);

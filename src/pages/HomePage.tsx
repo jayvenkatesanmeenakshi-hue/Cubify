@@ -98,12 +98,25 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
       // Fetch real custom token
       const response = await fetch('/api/auth/custom-token', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ uid: user.uid }),
       });
 
-      if (!response.ok) throw new Error('Nebula connection failed');
-      const { customToken } = await response.json();
+      const responseText = await response.text();
+      let data: any;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error("Nebula protocol corruption:", responseText);
+        throw new Error("Interface protocol mismatch");
+      }
+
+      if (!response.ok) throw new Error(data.error || `Nebula connection failed (${response.status})`);
+      const { customToken } = data;
       
       // Redirect with the token and ID
       const callbackUrl = new URL(finalRedirect);
