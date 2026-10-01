@@ -4,6 +4,7 @@ import { db, collection, doc, setDoc, getDocs, query, where, orderBy, onSnapshot
 import { MessageCircle, Users, UserPlus, Search, Send, Check, X, AlertCircle, Shield, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { handleFirestoreError, OperationType } from '../lib/firestoreError';
 
 interface SocialPageProps {
   user: User | null;
@@ -31,6 +32,8 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       if (docSnap.exists()) {
         setMyFriendId(docSnap.data().friendId || '');
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
     });
     return () => unsubscribe();
   }, [user]);
@@ -41,6 +44,8 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
     const q = query(collection(db, 'chats'), where('participants', 'array-contains', user.uid), orderBy('updatedAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snap) => {
       setChats(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'chats');
     });
     return () => unsubscribe();
   }, [user]);
@@ -51,6 +56,8 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
     const q = query(collection(db, 'friend_requests'), where('to', '==', user.uid), where('status', '==', 'pending'));
     const unsubscribe = onSnapshot(q, (snap) => {
       setRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'friend_requests');
     });
     return () => unsubscribe();
   }, [user]);
@@ -62,6 +69,8 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
     const unsubscribe = onSnapshot(q, (snap) => {
       setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, `chats/${activeChat.id}/messages`);
     });
     return () => unsubscribe();
   }, [activeChat]);
@@ -69,9 +78,13 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    const q = query(collection(db, 'users'), where('friendId', '==', searchQuery.trim()));
-    const snap = await getDocs(q);
-    setSearchResults(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    try {
+      const q = query(collection(db, 'users'), where('friendId', '==', searchQuery.trim()));
+      const snap = await getDocs(q);
+      setSearchResults(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'users');
+    }
   };
 
   const sendRequest = async (targetId: string) => {
@@ -87,7 +100,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       toast.success('Communication request dispatched.');
     } catch (e) {
       console.error(e);
-      toast.error('Dispatch failure.');
+      handleFirestoreError(e, OperationType.CREATE, 'friend_requests');
     }
   };
 
@@ -110,7 +123,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       setActiveTab('messages');
     } catch (e) {
       console.error(e);
-      toast.error('Synchronization failure.');
+      handleFirestoreError(e, OperationType.WRITE, 'chats');
     }
   };
 
@@ -121,6 +134,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       await batch.commit();
     } catch (e) {
       console.error(e);
+      handleFirestoreError(e, OperationType.UPDATE, `friend_requests/${req.id}`);
     }
   };
 
@@ -145,6 +159,7 @@ export const SocialPage: React.FC<SocialPageProps> = ({ user }) => {
       await batch.commit();
     } catch (e) {
       console.error(e);
+      handleFirestoreError(e, OperationType.WRITE, `chats/${activeChat.id}/messages`);
     }
   };
 

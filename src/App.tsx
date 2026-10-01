@@ -6,6 +6,7 @@ import { syncEcosystemUser } from './services/ecosystemService';
 import { User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
+import { handleFirestoreError, OperationType } from './lib/firestoreError';
 
 import { SocialPage } from './pages/SocialPage';
 import { HomePage } from './pages/HomePage';
@@ -68,9 +69,9 @@ export default function App() {
               bio: 'Exploring the StarVortex ecosystem.',
               aura: 10,
               linkedApps: ['Passport']
-            }).catch(e => console.error("Error creating user profile:", e));
+            }).catch(e => handleFirestoreError(e, OperationType.CREATE, `users/${currentUser.uid}`));
           }
-        }).catch(e => console.error("Error fetching user profile", e));
+        }).catch(e => handleFirestoreError(e, OperationType.GET, `users/${currentUser.uid}`));
       }
     });
     return () => unsubscribe();

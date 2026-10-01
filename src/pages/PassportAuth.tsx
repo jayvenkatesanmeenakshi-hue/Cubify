@@ -43,11 +43,20 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
         data = JSON.parse(responseText);
       } catch (parseErr) {
         console.error("Nebula protocol corruption (not JSON):", responseText);
-        throw new Error(`Protocol corruption: ${response.status} ${response.statusText}`);
+        throw new Error(`Protocol corruption [${response.status}]: ${responseText.substring(0, 100)}`);
       }
       
       if (!response.ok) {
-        throw new Error(data.error || `Handshake negotiation failed (${response.status})`);
+        let errorMsg = 'Handshake negotiation failed';
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            errorMsg = JSON.stringify(data.error);
+          } else {
+            errorMsg = data.error;
+          }
+          if (data.details) errorMsg += `: ${data.details}`;
+        }
+        throw new Error(errorMsg);
       }
       
       const { customToken } = data;
@@ -64,7 +73,8 @@ export const PassportAuth = ({ user, forcedClientId }: { user: any, forcedClient
       window.location.href = url.toString();
     } catch (err: any) {
       console.error('Handshake failed:', err);
-      setError(err.message || 'Unknown protocol error');
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Unknown protocol error');
       setLoading(false);
     }
   };

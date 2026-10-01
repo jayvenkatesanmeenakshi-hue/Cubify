@@ -1,5 +1,6 @@
 import { db } from '../firebase'; 
 import { doc, setDoc, getDoc, serverTimestamp, getDocFromServer, collection, addDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreError';
 
 export const syncEcosystemUser = async (user: any, appName: string) => {
   if (!user) return;
@@ -21,6 +22,7 @@ export const syncEcosystemUser = async (user: any, appName: string) => {
     }, { merge: true });
   } catch (error) {
     console.error('Ecosystem Sync Failed:', error);
+    handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
   }
 };
 
@@ -44,6 +46,7 @@ export const broadcastActivity = async (userId: string, description: string, met
     });
   } catch (error) {
     console.error('Failed to broadcast ecosystem activity:', error);
+    handleFirestoreError(error, OperationType.CREATE, `users/${userId}/activities`);
   }
 };
 
@@ -58,6 +61,7 @@ export const getEcosystemProfile = async (userId: string) => {
     return snap.data();
   } catch (err) {
     console.error('Failed to fetch ecosystem profile:', err);
+    handleFirestoreError(err, OperationType.GET, `users/${userId}`);
     return null;
   }
 };

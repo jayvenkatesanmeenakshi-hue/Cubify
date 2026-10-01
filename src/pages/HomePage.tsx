@@ -7,6 +7,7 @@ import { logout } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSearchParams } from 'react-router-dom';
 import { broadcastActivity } from '../services/ecosystemService';
+import { handleFirestoreError, OperationType } from '../lib/firestoreError';
 
 interface HomePageProps {
   user: User;
@@ -59,12 +60,16 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
         setEditName(data.displayName || user.displayName || 'Space Voyager');
         setEditBio(data.bio || 'Exploring the StarVortex ecosystem.');
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
     });
 
     // Listen for Security Logs (Activities)
     const q = query(collection(db, 'users', user.uid, 'activities'), orderBy('timestamp', 'desc'), limit(10));
     const unsubscribeActivities = onSnapshot(q, (snap) => {
       setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/activities`);
     });
 
     return () => {
@@ -74,11 +79,15 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
   }, [user]);
 
   const handleSave = async () => {
-    await setDoc(doc(db, 'users', user.uid), { 
-      displayName: editName,
-      bio: editBio 
-    }, { merge: true });
-    setIsEditing(false);
+    try {
+      await setDoc(doc(db, 'users', user.uid), { 
+        displayName: editName,
+        bio: editBio 
+      }, { merge: true });
+      setIsEditing(false);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+    }
   };
 
   const handleAuthConfirm = async (customClientId?: string, customRedirect?: string) => {
@@ -111,11 +120,22 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
       try {
         data = JSON.parse(responseText);
       } catch (parseErr) {
-        console.error("Nebula protocol corruption:", responseText);
-        throw new Error("Interface protocol mismatch");
+        console.error("Nebula protocol corruption (not JSON):", responseText);
+        throw new Error(`Interface protocol mismatch [${response.status}]: ${responseText.substring(0, 100)}`);
       }
 
-      if (!response.ok) throw new Error(data.error || `Nebula connection failed (${response.status})`);
+      if (!response.ok) {
+        let errorMsg = 'Nebula connection failed';
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            errorMsg = JSON.stringify(data.error);
+          } else {
+            errorMsg = data.error;
+          }
+          if (data.details) errorMsg += `: ${data.details}`;
+        }
+        throw new Error(errorMsg);
+      }
       const { customToken } = data;
       
       // Redirect with the token and ID
@@ -124,9 +144,10 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
       callbackUrl.searchParams.set('auth_token', customToken);
       
       window.location.href = callbackUrl.toString();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Handshake failed:', err);
-      alert('Handshake protocol failed. Check console.');
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Handshake protocol failed: ${msg}`);
     }
   };
 
@@ -229,7 +250,7 @@ export const HomePage: React.FC<HomePageProps> = ({ user }) => {
             </div>
 
             <button 
-              onClick={handleAuthConfirm}
+              onClick={() => handleAuthConfirm()}
               className="w-full py-4 bg-passport-gold hover:bg-passport-gold-light text-passport-black font-thin uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95 text-xs font-mono"
             >
               CONFIRM_IDENTITY
